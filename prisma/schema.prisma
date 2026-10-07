@@ -1,0 +1,222 @@
+// 1. Setup & Generator
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 2. Enums (Fixed choice lists)
+enum UserRole {
+  ADMIN
+  PASTOR
+  USHER
+  CALLER
+}
+
+enum PersonStatus {
+  MEMBER
+  FIRST_TIMER
+  EVANGELISM
+}
+
+enum PersonCategory {
+  ADULT
+  YOUTH
+  WORKER
+  CHILD
+}
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+enum CheckInMethod {
+  QR_SELF
+  USHER_MANUAL
+}
+
+// 3. Models (Tables)
+
+// -------------------------------------------------------------
+// The Church / Tenant
+// -------------------------------------------------------------
+model Church {
+  id              String   @id @default(cuid())
+  name            String
+  
+  // Geofencing Coordinates
+  latitude        Float    // e.g. 6.5244
+  longitude       Float    // e.g. 3.3792
+  geofenceRadius  Int      @default(150) // meters
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relationships (One church has many...)
+  users           User[]
+  services        ServiceSchedule[]
+  people          Person[]
+  groups          Group[]
+  teams           Team[]
+  attendance      AttendanceRecord[]
+}
+
+// -------------------------------------------------------------
+// Users (Ushers, Pastors, Admins, Callers who log into the portal)
+// -------------------------------------------------------------
+model User {
+  id              String   @id @default(cuid())
+  churchId        String
+  church          Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  name            String
+  email           String   @unique
+  passwordHash    String
+  role            UserRole @default(USHER)
+
+  teamId          String?  // Optional: which calling team are they on?
+  team            Team?    @relation(fields: [teamId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Logs of manual attendances marked by this usher
+  attendedByUsher AttendanceRecord[] @relation("UsherAttendance")
+}
+
+// -------------------------------------------------------------
+// Service Schedules (Workers, 1st Service, Sunday School, etc.)
+// -------------------------------------------------------------
+model ServiceSchedule {
+  id              String    @id @default(cuid())
+  churchId        String
+  church          Church    @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  name            String    // "Workers Meeting", "1st Service", "Sunday School"
+  dayOfWeek       DayOfWeek // SUNDAY, TUESDAY, etc.
+  startTime       String    // "06:00" (24h format)
+  endTime         String    // "07:45"
+  
+  // Optional flag: does this service have sub-classes like Youth/Adult?
+  hasSubClasses   Boolean   @default(false) 
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  attendanceRecords AttendanceRecord[]
+
+  @@index([churchId, dayOfWeek])
+}
+
+// -------------------------------------------------------------
+// People (Single table for Members, First-Timers, Evangelism)
+// -------------------------------------------------------------
+model Person {
+  id              String         @id @default(cuid())
+  churchId        String
+  church          Church         @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  firstName       String
+  lastName        String
+  phone           String         // Full phone e.g. "08012345678"
+  phoneLast4      String         // "5678" (for instant 4-digit search)
+  
+  dateOfBirth     DateTime?      // Optional for now (ready for future birthday system)
+  category        PersonCategory @default(ADULT)
+  status          PersonStatus   @default(MEMBER)
+  
+  // Which calling group do they belong to? (Group A, B, C...)
+  groupId         String?
+  group           Group?         @relation(fields: [groupId], references: [id])
+
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  attendanceRecords AttendanceRecord[]
+  followUpResults   FollowUpResult[]
+
+  // Indexes make search queries lightning fast
+  @@index([churchId, phoneLast4])
+  @@index([churchId, groupId])
+}
+
+// -------------------------------------------------------------
+// Attendance Records (Every time someone checks in)
+// -------------------------------------------------------------
+model AttendanceRecord {
+  id                String          @id @default(cuid())
+  churchId          String
+  church            Church          @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  personId          String
+  person            Person          @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  serviceScheduleId String
+  serviceSchedule   ServiceSchedule @relation(fields: [serviceScheduleId], references: [id], onDelete: Cascade)
+
+  date              DateTime        // The date of attendance (e.g. 2026-10-04)
+  subClass          String?         // "ADULT" or "YOUTH" (for Sunday School)
+  
+  method            CheckInMethod   @default(QR_SELF) // Did they scan, or did an usher do it?
+  usherId           String?         // If marked by an usher, which user did it?
+  usher             User?           @relation("UsherAttendance", fields: [usherId], references: [id])
+
+  createdAt         DateTime        @default(now())
+
+  // A person can only be marked once per service per day
+  @@unique([personId, serviceScheduleId, date])
+  @@index([churchId, date])
+}
+
+// -------------------------------------------------------------
+// Group & Calling Team Rotation (From PRD)
+// -------------------------------------------------------------
+model Group {
+  id        String   @id @default(cuid())
+  churchId  String
+  church    Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  name      String   // "Group A", "Group B"
+  people    Person[]
+
+  createdAt DateTime @default(now())
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  churchId  String
+  church    Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  name      String   // "Team 1", "Team 2"
+  members   User[]   // Callers assigned to this team
+
+  createdAt DateTime @default(now())
+}
+
+// -------------------------------------------------------------
+// Follow-up Results (Logged by callers during Friday/Saturday calls)
+// -------------------------------------------------------------
+model FollowUpResult {
+  id         String   @id @default(cuid())
+  personId   String
+  person     Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  callerName String   // Name of volunteer who called
+  weekNumber Int      // Which calendar week of the year
+  outcome    String   // "Doing well", "Needs prayer", "Wants a visit", etc.
+  note       String?  // Short note if "Needs attention"
+
+  createdAt  DateTime @default(now())
+
+  @@index([personId])
+}
