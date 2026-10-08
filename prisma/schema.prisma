@@ -132,6 +132,7 @@ model Person {
   
   dateOfBirth     DateTime?      // Optional for now (ready for future birthday system)
   category        PersonCategory @default(ADULT)
+  subCategory     String?        // "YOUTH_WORKER" | "ADULT_WORKER" | "YOUTH" | "ADULT" | "CHILD"
   status          PersonStatus   @default(MEMBER)
   
   // Which calling group do they belong to? (Group A, B, C...)

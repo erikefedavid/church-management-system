@@ -49,7 +49,7 @@ export default function Toast({ type, message, title, onClose, duration = 3500 }
   }[type];
 
   return (
-    <div className="fixed top-5 right-5 z-50 max-w-sm w-full animate-in fade-in slide-in-from-top-4 duration-200 transition-all">
+    <div className="fixed top-5 right-5 z-[99999] max-w-sm w-full animate-in fade-in slide-in-from-top-4 duration-200 transition-all">
       <div
         className={`${styleConfig.bg} ${styleConfig.border} border shadow-lg rounded-2xl p-4 flex items-start gap-3 backdrop-blur-md`}
       >

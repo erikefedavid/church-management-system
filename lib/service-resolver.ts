@@ -11,6 +11,7 @@ export interface NextUpcomingService {
 
 export interface ActiveServiceResult {
   activeService: ServiceSchedule | null;
+  fallbackService?: ServiceSchedule | null;
   todayServices: ServiceSchedule[];
   concurrentServices?: ServiceSchedule[];
   isLiveNow: boolean;
@@ -69,6 +70,32 @@ export function getNigerianTimeInfo(date: Date = new Date()) {
     currentTimeString,
     formatted12Hour,
   };
+}
+
+/**
+ * Formats a 24-hour time string (e.g. "07:00", "17:00") into a clean 12-hour string with AM/PM (e.g. "07:00 AM", "05:00 PM").
+ */
+export function formatTime12(timeStr?: string): string {
+  if (!timeStr) return '';
+  const parts = timeStr.trim().split(':');
+  if (parts.length < 2) return timeStr;
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (isNaN(h) || isNaN(m)) return timeStr;
+
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  const padHour = String(hour12).padStart(2, '0');
+  const padMin = String(m).padStart(2, '0');
+  return `${padHour}:${padMin} ${period}`;
+}
+
+/**
+ * Formats a start and end time into an explicit AM/PM range (e.g. "07:00 AM - 08:00 AM", "05:00 PM - 06:00 PM").
+ */
+export function formatTimeRange12(startTime?: string, endTime?: string): string {
+  if (!startTime || !endTime) return '';
+  return `${formatTime12(startTime)} - ${formatTime12(endTime)}`;
 }
 
 /**
@@ -282,7 +309,7 @@ export async function getActiveChurchService(
       dayOfWeek: 'Today',
       startTime: upcomingToday.startTime,
       endTime: upcomingToday.endTime,
-      formattedSchedule: `Today at ${upcomingToday.startTime}`,
+      formattedSchedule: `Today at ${formatTime12(upcomingToday.startTime)}`,
     };
   } else {
     // B. Find next scheduled service in the weekly cycle
@@ -308,7 +335,7 @@ export async function getActiveChurchService(
           dayOfWeek: dayLabel,
           startTime: nextSvc.startTime,
           endTime: nextSvc.endTime,
-          formattedSchedule: `${dayLabel} at ${nextSvc.startTime}`,
+          formattedSchedule: `${dayLabel} at ${formatTime12(nextSvc.startTime)}`,
         };
         break;
       }
@@ -337,7 +364,8 @@ export async function getActiveChurchService(
   );
 
   return {
-    activeService: resolvedService,
+    activeService: isLiveNow ? activeService : null,
+    fallbackService: fallbackService || null,
     todayServices,
     concurrentServices: matchingServices,
     isLiveNow,
@@ -346,7 +374,7 @@ export async function getActiveChurchService(
     currentDay,
     currentTimeString,
     nigerianTimeFormatted: `${ngTime.formatted12Hour} WAT`,
-    portalSubtitle,
+    portalSubtitle: isLiveNow ? portalSubtitle : 'Attendance Portal (Off-Hours)',
     isFirstSunday,
     isThirdSaturday,
     nextUpcomingService,

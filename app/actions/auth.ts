@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers';
 
 // Fixed, easy-to-remember passwords/PINs for church staff
-const USHER_PASSWORDS = ['usher2026', '4444', 'usher123'];
+const USHER_PASSWORDS = ['usher20226', 'usher2026', '4444', 'usher123'];
 const ADMIN_PASSWORDS = ['pastor2026', '7777', 'admin123', 'rccg2026'];
 
 export type AuthRole = 'USHER' | 'ADMIN' | null;

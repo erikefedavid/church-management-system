@@ -51,7 +51,7 @@ export default function CustomDropdown({
   }, []);
 
   return (
-    <div className={`relative ${className}`} ref={containerRef}>
+    <div className={`relative ${isOpen ? 'z-[100]' : 'z-20'} ${className}`} ref={containerRef}>
       {label && (
         <label className="block text-xs font-bold text-slate-700 mb-1.5">{label}</label>
       )}
@@ -91,7 +91,7 @@ export default function CustomDropdown({
 
       {/* Styled Options Popover */}
       {isOpen && (
-        <div className="absolute z-40 left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute z-[200] left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl py-1.5 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
           {options.length === 0 ? (
             <div className="px-3 py-2 text-xs text-slate-400 text-center">No options available</div>
           ) : (

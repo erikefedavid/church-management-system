@@ -34,6 +34,8 @@ import { isWithinChurchGeofence } from '@/lib/geo';
 import Toast from './components/Toast';
 import AmbientBackground from './components/AmbientBackground';
 import EntranceSplash from './components/EntranceSplash';
+import { formatTimeRange12 } from '@/lib/service-resolver';
+import { PersonCategory } from '@prisma/client';
 
 // Weekly / Sunday Encouraging Scriptures
 const SUNDAY_SCRIPTURES = [
@@ -59,6 +61,7 @@ export default function MemberCheckInPortal() {
 
   // Remembered Member State (Auto-Fill / 1-Tap Check-In for returning members)
   const [savedMember, setSavedMember] = useState<{ id: string; name: string; phoneLast4: string } | null>(null);
+  const [showManualInput, setShowManualInput] = useState<boolean>(false);
 
   // Geolocation state (100% automated background check)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -94,6 +97,7 @@ export default function MemberCheckInPortal() {
   const [ftFirstName, setFtFirstName] = useState('');
   const [ftLastName, setFtLastName] = useState('');
   const [ftPhone, setFtPhone] = useState('');
+  const [ftCategory, setFtCategory] = useState<PersonCategory>(PersonCategory.ADULT);
 
   // Status/Feedback messages
   const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'error' | 'success' | 'info'; text: string } | null>(null);
@@ -332,7 +336,8 @@ export default function MemberCheckInPortal() {
       setStep('FIRST_TIMER_FORM');
       setFtPhone('');
     } else if (res.count === 1 && res.members) {
-      setSelectedMember(res.members[0]);
+      // 1-Step Immediate Attendance Check-In (no redundant second button!)
+      await handleConfirmCheckIn(res.members[0]);
     } else {
       setMatchedMembers(res.members || []);
       setStep('COLLISION_CHOICE');
@@ -366,6 +371,7 @@ export default function MemberCheckInPortal() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('rccg_saved_member');
       setSavedMember(null);
+      setShowManualInput(true);
     }
   }
 
@@ -398,8 +404,8 @@ export default function MemberCheckInPortal() {
       const slipData = {
         personId: person.id,
         name: memberFullName,
-        serviceId: activeService.id,
-        serviceName: activeService.name,
+        serviceId: (res as any).serviceId || activeService.id,
+        serviceName: (res as any).serviceName || activeService.name,
         date: todayDate,
         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
       };
@@ -463,6 +469,7 @@ export default function MemberCheckInPortal() {
       firstName: ftFirstName,
       lastName: ftLastName || '(First-Timer)',
       phone: ftPhone,
+      category: ftCategory,
       serviceScheduleId: activeService.id,
       subClass: activeService.hasSubClasses ? selectedSubClass : undefined,
       userLatitude: userLocation?.lat,
@@ -476,8 +483,8 @@ export default function MemberCheckInPortal() {
       const slipData = {
         personId: (res as any).personId || 'first-timer',
         name: ftFullName,
-        serviceId: activeService.id,
-        serviceName: activeService.name,
+        serviceId: (res as any).serviceId || activeService.id,
+        serviceName: (res as any).serviceName || activeService.name,
         date: todayDate,
         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
       };
@@ -614,16 +621,16 @@ export default function MemberCheckInPortal() {
             </div>
 
             {/* Active / Scheduled Service Card */}
-            {activeService && (
+            {isLiveNow && activeService ? (
               <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 uppercase tracking-wider">
                     <Clock className="w-3.5 h-3.5" />
-                    <span>{isLiveNow ? 'Current Service' : 'Scheduled Service'}</span>
+                    <span>Live Service in Session</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-semibold text-slate-500 font-mono">
-                      {activeService.startTime} - {activeService.endTime}
+                      {formatTimeRange12(activeService.startTime, activeService.endTime)}
                     </span>
                     {isOvertime && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
@@ -639,9 +646,7 @@ export default function MemberCheckInPortal() {
                     <p className="text-[11px] text-blue-700 font-medium">
                       {isOvertime
                         ? 'Service extended — attendance remains open'
-                        : isLiveNow
-                        ? 'Attendance automatically logged for this session'
-                        : 'Attendance portal ready'}
+                        : 'Attendance automatically logged for this session'}
                     </p>
                   </div>
                   <ShieldCheck className="w-6 h-6 text-blue-600" />
@@ -675,7 +680,7 @@ export default function MemberCheckInPortal() {
                         >
                           <div className="text-xs font-bold truncate">{svc.name}</div>
                           <div className={`text-[10px] font-mono ${activeService?.id === svc.id ? 'text-blue-100' : 'text-slate-500'}`}>
-                            {svc.startTime} - {svc.endTime}
+                            {formatTimeRange12(svc.startTime, svc.endTime)}
                           </div>
                         </button>
                       ))}
@@ -732,15 +737,43 @@ export default function MemberCheckInPortal() {
                       </span>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => executeLocationCheck()}
-                    title="Refresh GPS"
-                    className="text-[11px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>Refresh</span>
-                  </button>
+                  {geoAllowed && (
+                    <button
+                      type="button"
+                      onClick={() => executeLocationCheck()}
+                      title="Refresh GPS"
+                      className="text-[11px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Refresh</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Off-Hours</span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                    No Church Service Currently Available
+                  </span>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900">
+                      {nextUpcomingService
+                        ? `Next Service: ${nextUpcomingService.name}`
+                        : 'No Active Church Service'}
+                    </h2>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      The attendance gate will automatically open once service begins.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -922,121 +955,97 @@ export default function MemberCheckInPortal() {
                   </div>
                 ) : (
                   <>
-                    {/* AUTO-FILL CARD: Returning Member (1-Tap Check-In) */}
-                    {savedMember && step === 'INPUT' && !selectedMember && (
-                  <div className="bg-blue-50/70 border-2 border-blue-200 rounded-3xl p-5 shadow-xs space-y-3.5">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
-                          <User className="w-5 h-5" />
+                    {/* OPTION A: AUTO-FILL CARD FOR RETURNING MEMBER (Clean 1-Tap Check-In) */}
+                    {savedMember && !showManualInput && step === 'INPUT' ? (
+                      <div className="bg-blue-50/70 border-2 border-blue-200 rounded-3xl p-6 shadow-xs space-y-4 animate-in fade-in duration-150">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                            <User className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider block">
+                              Welcome Back
+                            </span>
+                            <h3 className="text-lg font-bold text-slate-900 leading-tight">
+                              {savedMember.name}
+                            </h3>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">
-                            Welcome Back
-                          </span>
-                          <h3 className="text-base font-bold text-slate-900 leading-tight">
-                            {savedMember.name}
-                          </h3>
+
+                        <button
+                          type="button"
+                          disabled={lookupLoading}
+                          onClick={handleSavedMemberQuickCheckIn}
+                          className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-base rounded-2xl shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-5 h-5" />
+                          <span>{lookupLoading ? 'Recording Attendance...' : '1-Tap: Mark My Attendance'}</span>
+                        </button>
+
+                        <div className="text-center pt-1 border-t border-blue-200/60">
+                          <button
+                            type="button"
+                            onClick={() => setShowManualInput(true)}
+                            className="text-xs text-slate-500 hover:text-blue-700 font-medium underline cursor-pointer"
+                          >
+                            Not you? Enter a different phone number
+                          </button>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={forgetMemberOnDevice}
-                        className="text-[11px] text-slate-400 hover:text-slate-600 underline cursor-pointer"
-                      >
-                        Switch account
-                      </button>
-                    </div>
+                    ) : (
+                      /* OPTION B: CLEAN 4-DIGIT INPUT KEYPAD */
+                      step === 'INPUT' && (
+                        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-5 animate-in fade-in duration-150">
+                          <div className="text-center space-y-1">
+                            <h2 className="text-lg font-bold text-slate-900">
+                              Mark Your Attendance
+                            </h2>
+                            <p className="text-xs text-slate-500 font-medium">
+                              Type the last 4 digits of your phone number
+                            </p>
+                          </div>
 
-                    <button
-                      type="button"
-                      disabled={lookupLoading}
-                      onClick={handleSavedMemberQuickCheckIn}
-                      className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>{lookupLoading ? 'Recording...' : '1-Tap: Mark My Attendance'}</span>
-                    </button>
-                  </div>
-                )}
+                          <form onSubmit={handleFindAndMarkAttendance} className="space-y-4">
+                            <div>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={4}
+                                placeholder="• • • •"
+                                value={digits}
+                                onChange={handleInputChange}
+                                className="w-full h-18 text-center text-4xl font-extrabold tracking-[0.5em] text-blue-900 bg-slate-50 border-2 border-slate-200 focus:border-blue-600 focus:bg-white rounded-2xl focus:outline-none transition-all placeholder:text-slate-300 placeholder:tracking-widest cursor-text"
+                              />
+                              <p className="text-[11px] text-slate-400 text-center mt-2 font-medium">
+                                Strictly 4 digits (e.g. 4567)
+                              </p>
+                            </div>
 
-                {/* STEP 1: CLEAN 4-DIGIT INPUT (Opens native phone numeric dialpad) */}
-                {step === 'INPUT' && !selectedMember && (
-                  <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-5">
-                    <div className="text-center space-y-1">
-                      <h2 className="text-lg font-bold text-slate-900">
-                        {savedMember ? 'Or Enter 4 Digits' : 'Mark Your Attendance'}
-                      </h2>
-                      <p className="text-xs text-slate-500 font-medium">
-                        Type the last 4 digits of your phone number
-                      </p>
-                    </div>
+                            <button
+                              type="submit"
+                              disabled={lookupLoading || digits.length !== 4}
+                              className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-base rounded-2xl shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+                            >
+                              <CheckCircle2 className="w-5 h-5" />
+                              <span>{lookupLoading ? 'Checking In...' : 'Mark Your Attendance'}</span>
+                            </button>
 
-                    <form onSubmit={handleFindAndMarkAttendance} className="space-y-4">
-                      <div>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          maxLength={4}
-                          placeholder="• • • •"
-                          value={digits}
-                          onChange={handleInputChange}
-                          className="w-full h-18 text-center text-4xl font-extrabold tracking-[0.5em] text-blue-900 bg-slate-50 border-2 border-slate-200 focus:border-blue-600 focus:bg-white rounded-2xl focus:outline-none transition-all placeholder:text-slate-300 placeholder:tracking-widest cursor-text"
-                        />
-                        <p className="text-[11px] text-slate-400 text-center mt-2 font-medium">
-                          Strictly 4 digits (e.g. 4567)
-                        </p>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={lookupLoading || digits.length !== 4}
-                        className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-base rounded-2xl shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
-                      >
-                        <CheckCircle2 className="w-5 h-5" />
-                        <span>{lookupLoading ? 'Checking Directory...' : 'Mark Your Attendance'}</span>
-                      </button>
-                    </form>
-                  </div>
-                )}
-
-                {/* CONFIRMATION CARD (Single member match) */}
-                {selectedMember && step === 'INPUT' && (
-                  <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-md space-y-5 animate-in fade-in zoom-in-95 duration-200">
-                    <div className="text-center space-y-2">
-                      <div className="w-14 h-14 rounded-full bg-blue-50 border-2 border-blue-500 text-blue-600 flex items-center justify-center mx-auto shadow-xs">
-                        <Sparkles className="w-7 h-7" />
-                      </div>
-                      <h3 className="text-lg font-bold text-slate-900">
-                        Hi, {selectedMember.firstName} {selectedMember.lastName}!
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        Member Category: <span className="text-blue-700 font-bold">{selectedMember.category}</span>
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <button
-                        type="button"
-                        disabled={lookupLoading}
-                        onClick={() => handleConfirmCheckIn(selectedMember)}
-                        className="w-full py-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-base rounded-2xl shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <CheckCircle2 className="w-5 h-5" />
-                        <span>{lookupLoading ? 'Recording Attendance...' : 'Yes, Confirm My Attendance'}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleReset}
-                        className="w-full py-2.5 text-xs text-slate-500 hover:text-slate-800 font-medium transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        <span>Not you? Try another number</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+                            {savedMember && (
+                              <div className="text-center pt-1 border-t border-slate-100">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowManualInput(false)}
+                                  className="text-xs text-blue-600 hover:underline font-semibold cursor-pointer"
+                                >
+                                  ← Return to 1-Tap check-in ({savedMember.name})
+                                </button>
+                              </div>
+                            )}
+                          </form>
+                        </div>
+                      )
+                    )}
 
                 {/* STEP: COLLISION CHOICE */}
                 {step === 'COLLISION_CHOICE' && (
@@ -1063,7 +1072,13 @@ export default function MemberCheckInPortal() {
                             <p className="text-sm font-bold text-slate-900 group-hover:text-blue-700">
                               {member.firstName} {member.lastName}
                             </p>
-                            <p className="text-[11px] text-slate-500">{member.category}</p>
+                            <p className="text-[11px] text-slate-500">
+                              {member.category === 'WORKER' || member.subCategory?.includes('WORKER')
+                                ? 'Worker'
+                                : member.category === 'YOUTH' || member.subCategory === 'YOUTH'
+                                ? 'Youth'
+                                : 'Adult'}
+                            </p>
                           </div>
                           <span className="text-xs bg-white border border-slate-200 px-2.5 py-1 rounded-md text-slate-700 group-hover:bg-blue-600 group-hover:text-white transition-colors font-medium flex items-center gap-1">
                             <span>Select</span>
@@ -1128,6 +1143,34 @@ export default function MemberCheckInPortal() {
                           onChange={(e) => setFtPhone(e.target.value)}
                           className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-slate-700 font-semibold mb-1 block">Demographic</label>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setFtCategory(PersonCategory.ADULT)}
+                            className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                              ftCategory === PersonCategory.ADULT
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            Adult
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFtCategory(PersonCategory.YOUTH)}
+                            className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                              ftCategory === PersonCategory.YOUTH
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            Youth
+                          </button>
+                        </div>
                       </div>
 
                       <div className="pt-2 space-y-2">

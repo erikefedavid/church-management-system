@@ -19,6 +19,9 @@ import {
   Calendar,
   TrendingUp,
   FileSpreadsheet,
+  ChevronDown,
+  GraduationCap,
+  BookOpen,
 } from 'lucide-react';
 import {
   getAdminScorecardAction,
@@ -30,6 +33,7 @@ import CustomDropdown from '../components/CustomDropdown';
 import ExportExcelModal from '../components/ExportExcelModal';
 import ManageServicesModal from '../components/ManageServicesModal';
 import AmbientBackground from '../components/AmbientBackground';
+import { formatTimeRange12 } from '@/lib/service-resolver';
 
 export default function AdminScorecardDashboard() {
   const [loading, setLoading] = useState(true);
@@ -49,9 +53,27 @@ export default function AdminScorecardDashboard() {
 
   // Export Modal state
   const [showExportModal, setShowExportModal] = useState(false);
+  const [selectedExportService, setSelectedExportService] = useState<{ records: any[]; label: string; dateISO?: string } | null>(null);
+
+  // Specific date query state (e.g. YYYY-MM-DD)
+  const [selectedDate, setSelectedDate] = useState('');
+
+  // Roll call expansion state per service card
+  const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null);
 
   // Manage Services Modal state
   const [showServicesModal, setShowServicesModal] = useState(false);
+
+  // Helper to format role category (Worker, Youth, Adult, First-Timer, Sunday School)
+  function getCategoryDisplay(person: any, subClass?: string | null) {
+    if (subClass) return `${subClass} Sunday School`;
+    if (person?.status === 'FIRST_TIMER') return 'First-Timer';
+    const sub = person?.subCategory;
+    const cat = person?.category;
+    if (cat === 'WORKER' || sub === 'WORKER' || sub === 'YOUTH_WORKER' || sub === 'ADULT_WORKER') return 'Worker';
+    if (cat === 'YOUTH' || sub === 'YOUTH') return 'Youth';
+    return 'Adult';
+  }
 
   // Toast Notification state
   const [toast, setToast] = useState<{
@@ -72,9 +94,9 @@ export default function AdminScorecardDashboard() {
     setLoading(false);
   }, []);
 
-  async function loadScorecard(range: AdminTimeRange = timeRange) {
+  async function loadScorecard(range: AdminTimeRange = timeRange, dateStr: string = selectedDate) {
     setRefreshing(true);
-    const res = await getAdminScorecardAction(range);
+    const res = await getAdminScorecardAction(range, dateStr || undefined);
     if (res.success) {
       setData(res);
     } else {
@@ -90,7 +112,8 @@ export default function AdminScorecardDashboard() {
 
   function handleTimeRangeChange(newRange: AdminTimeRange) {
     setTimeRange(newRange);
-    loadScorecard(newRange);
+    setSelectedDate('');
+    loadScorecard(newRange, '');
   }
 
   function handlePinSubmit(e: React.FormEvent) {
@@ -191,15 +214,17 @@ export default function AdminScorecardDashboard() {
       {/* Export Excel Modal */}
       <ExportExcelModal
         isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        records={data?.recentAttendanceRecords || []}
-        counts={{
-          total: data?.totalUniqueAttendees || data?.recentAttendanceRecords?.length || 0,
-          workers: data?.categoryBreakdown?.totalWorkers || 0,
-          youth: data?.categoryBreakdown?.totalYouth || 0,
-          firstTimers: data?.totalFirstTimers || 0,
+        onClose={() => {
+          setShowExportModal(false);
+          setSelectedExportService(null);
         }}
-        timeframeLabel={data?.timeRangeLabel || 'Selected Timeframe'}
+        records={selectedExportService ? selectedExportService.records : (data?.recentAttendanceRecords || [])}
+        timeframeLabel={
+          selectedExportService
+            ? selectedExportService.label
+            : (data?.timeRangeLabel || data?.activeDateFormatted || 'Attendance')
+        }
+        dateISO={selectedExportService?.dateISO || data?.activeDateISO}
         onSuccessToast={(msg) =>
           setToast({
             type: 'success',
@@ -266,6 +291,39 @@ export default function AdminScorecardDashboard() {
               />
             </div>
 
+            {/* Pick Specific Date for Past Records */}
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-2xs">
+              <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedDate(val);
+                  if (val) {
+                    setTimeRange('CUSTOM_DATE');
+                    loadScorecard('CUSTOM_DATE', val);
+                  }
+                }}
+                className="text-xs text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+                title="Filter by specific date"
+              />
+              {selectedDate && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedDate('');
+                    setTimeRange('TODAY');
+                    loadScorecard('TODAY', '');
+                  }}
+                  className="text-slate-400 hover:text-slate-700 text-xs font-bold cursor-pointer ml-0.5"
+                  title="Clear date filter"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={() => setShowServicesModal(true)}
@@ -295,13 +353,6 @@ export default function AdminScorecardDashboard() {
               <FileSpreadsheet className="w-3.5 h-3.5" />
               <span>Download Excel</span>
             </button>
-
-            <Link
-              href="/usher"
-              className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl border border-slate-200 font-bold transition-colors cursor-pointer"
-            >
-              Usher Desk
-            </Link>
           </div>
         </div>
       </header>
@@ -323,75 +374,135 @@ export default function AdminScorecardDashboard() {
                   {data?.timeRangeLabel || 'Today'}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-medium">
-                Showing data from live PostgreSQL database
-              </p>
             </div>
 
-            {/* 4 Executive Metric Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {/* Metric 1: Total Attendees */}
-              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-5 shadow-xs space-y-2">
+            {/* Live Service in Session Alert Banner (NO USHER DESK LINK) */}
+            {data?.isLiveNow && data?.activeService && (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3.5 flex items-center gap-3 text-xs">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <div>
+                  <span className="font-bold text-emerald-950 block">
+                    🔴 Live Service in Session: {data.activeService.name} ({formatTimeRange12(data.activeService.startTime, data.activeService.endTime)})
+                  </span>
+                  <span className="text-[11px] text-emerald-800">
+                    Attendance check-ins are actively streaming in West Africa Time.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Executive Metric Cards: Total Present, Workers, Youth, Adults, Youth Sunday School, Adult Sunday School, First-Timers */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+              {/* Metric 1: Total Present */}
+              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     Total Present
                   </span>
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <Users className="w-5 h-5" />
+                  <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Users className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-3xl sm:text-4xl font-extrabold text-slate-900">
+                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
                   {data?.totalUniqueAttendees || 0}
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium">Unique attendees in this timeframe</p>
+                <p className="text-[10px] text-slate-500 font-medium">All church attendees</p>
               </div>
 
               {/* Metric 2: Workers */}
-              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-5 shadow-xs space-y-2">
+              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     Workers
                   </span>
-                  <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                    <Briefcase className="w-5 h-5" />
+                  <div className="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <Briefcase className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-3xl sm:text-4xl font-extrabold text-indigo-600">
+                <div className="text-2xl sm:text-3xl font-extrabold text-indigo-600">
                   {data?.categoryBreakdown?.totalWorkers || 0}
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium">Ministers & church workers</p>
+                <p className="text-[10px] text-slate-500 font-medium">Youth & adult workers</p>
               </div>
 
               {/* Metric 3: Youth */}
-              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-5 shadow-xs space-y-2">
+              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     Youth
                   </span>
-                  <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5" />
+                  <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-3xl sm:text-4xl font-extrabold text-amber-600">
+                <div className="text-2xl sm:text-3xl font-extrabold text-amber-600">
                   {data?.categoryBreakdown?.totalYouth || 0}
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium">Youth class & young adults</p>
+                <p className="text-[10px] text-slate-500 font-medium">Youth attendees</p>
               </div>
 
-              {/* Metric 4: First-Timers */}
-              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-5 shadow-xs space-y-2">
+              {/* Metric 4: Adults */}
+              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    First-Timers
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Adults
                   </span>
-                  <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <UserPlus className="w-5 h-5" />
+                  <div className="w-7 h-7 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                    <Users className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-3xl sm:text-4xl font-extrabold text-emerald-600">
-                  {data?.totalFirstTimers || 0}
+                <div className="text-2xl sm:text-3xl font-extrabold text-sky-700">
+                  {data?.categoryBreakdown?.totalAdults || 0}
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium">New souls registered</p>
+                <p className="text-[10px] text-slate-500 font-medium">Adult attendees</p>
+              </div>
+
+              {/* Metric 5: Youth Sunday School */}
+              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Youth SS
+                  </span>
+                  <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <GraduationCap className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-purple-700">
+                  {data?.categoryBreakdown?.youthSundaySchool || 0}
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium">Youth Sunday School</p>
+              </div>
+
+              {/* Metric 6: Adult Sunday School */}
+              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Adult SS
+                  </span>
+                  <div className="w-7 h-7 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-teal-700">
+                  {data?.categoryBreakdown?.adultSundaySchool || 0}
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium">Adult Sunday School</p>
+              </div>
+
+              {/* Metric 7: First-Timers */}
+              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    First-Timers
+                  </span>
+                  <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <UserPlus className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600">
+                  {data?.categoryBreakdown?.totalFirstTimers ?? data?.totalFirstTimers ?? 0}
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium">New souls registered</p>
               </div>
             </div>
 
@@ -445,41 +556,191 @@ export default function AdminScorecardDashboard() {
               )}
             </div>
 
-            {/* TAB 1: SERVICE BREAKDOWN */}
+            {/* TAB 1: SERVICE BREAKDOWN & 1-CLICK EXPORTS */}
             {activeTab === 'SERVICES' && (
-              <div className="space-y-3">
-                <h2 className="text-sm font-bold text-slate-900">Service Breakdown</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  {data?.servicesBreakdown?.map((svc) => (
-                    <div
-                      key={svc.id}
-                      className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl p-5 shadow-xs space-y-3"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-base font-bold text-slate-900">{svc.name}</h3>
-                          <p className="text-xs text-slate-500 font-mono font-medium">
-                            {svc.startTime} - {svc.endTime}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-2xl font-extrabold text-blue-600">{svc.totalPresent}</span>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase">Present</p>
-                        </div>
-                      </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-blue-600" />
+                    <span>Service Breakdown &amp; Class Splits</span>
+                  </h2>
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    Showing {data?.servicesBreakdown?.length || 0} services
+                  </span>
+                </div>
 
-                      {svc.hasSubClasses && (
-                        <div className="pt-2 border-t border-slate-100 flex items-center gap-3">
-                          <span className="text-xs bg-blue-50 text-blue-800 border border-blue-200 px-3 py-1 rounded-lg font-bold">
-                            Adult Class: {svc.adultCount}
-                          </span>
-                          <span className="text-xs bg-indigo-50 text-indigo-800 border border-indigo-200 px-3 py-1 rounded-lg font-bold">
-                            Youth Class: {svc.youthCount}
-                          </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {data?.servicesBreakdown?.map((svc) => {
+                    const isExpanded = expandedServiceId === svc.id;
+                    const hasRecords = svc.totalPresent > 0;
+                    const isSundaySchool = svc.hasSubClasses || svc.name.toLowerCase().includes('sunday school');
+
+                    return (
+                      <div
+                        key={svc.id}
+                        className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl p-5 shadow-xs space-y-3.5 transition-all"
+                      >
+                        {/* Service Card Header */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="text-base font-bold text-slate-900">{svc.name}</h3>
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                  svc.status === 'LIVE'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse'
+                                    : svc.status === 'CONCLUDED'
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                    : 'bg-slate-50 text-slate-600 border-slate-200'
+                                }`}
+                              >
+                                {svc.status === 'LIVE'
+                                  ? '● Live Now'
+                                  : svc.status === 'CONCLUDED'
+                                  ? '✓ Concluded'
+                                  : '⏳ Upcoming'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 font-mono font-medium">
+                              {formatTimeRange12(svc.startTime, svc.endTime)}
+                            </p>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="text-2xl font-extrabold text-blue-600 leading-tight">
+                              {svc.totalPresent}
+                            </div>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                              Present
+                            </p>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
+
+                        {/* Demographic & Class Split Pills */}
+                        {hasRecords ? (
+                          <div className="flex flex-wrap gap-1.5 text-[11px] pt-1 border-t border-slate-100">
+                            {isSundaySchool ? (
+                              <>
+                                <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2.5 py-1 rounded-xl font-bold">
+                                  Adult Sunday School: {svc.adultSundaySchoolCount ?? svc.adultCount ?? 0}
+                                </span>
+                                <span className="bg-purple-50 text-purple-800 border border-purple-200 px-2.5 py-1 rounded-xl font-bold">
+                                  Youth Sunday School: {svc.youthSundaySchoolCount ?? svc.youthCount ?? 0}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                {(svc.workersCount ?? 0) > 0 && (
+                                  <span className="bg-indigo-50 text-indigo-800 border border-indigo-200 px-2.5 py-1 rounded-xl font-bold">
+                                    Workers: {svc.workersCount}
+                                  </span>
+                                )}
+                                {(svc.adultCount ?? 0) > 0 && (
+                                  <span className="bg-sky-50 text-sky-800 border border-sky-200 px-2.5 py-1 rounded-xl font-bold">
+                                    Adults: {svc.adultCount}
+                                  </span>
+                                )}
+                                {(svc.youthCount ?? 0) > 0 && (
+                                  <span className="bg-purple-50 text-purple-800 border border-purple-200 px-2.5 py-1 rounded-xl font-bold">
+                                    Youth: {svc.youthCount}
+                                  </span>
+                                )}
+                              </>
+                            )}
+
+                            {(svc.firstTimersCount ?? 0) > 0 && (
+                              <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-xl font-bold flex items-center gap-1">
+                                <Sparkles className="w-3 h-3" />
+                                <span>1st Timers: {svc.firstTimersCount}</span>
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-slate-400 italic pt-1 border-t border-slate-100">
+                            No attendance recorded yet for this session.
+                          </p>
+                        )}
+
+                        {/* Action Buttons: 1-Click Excel Download & Roll Call Expansion */}
+                        {hasRecords && (
+                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const dateTag = data?.activeDateFormatted || data?.timeRangeLabel || 'Service';
+                                setSelectedExportService({
+                                  records: svc.records,
+                                  label: `${svc.name} (${dateTag})`,
+                                  dateISO: data?.activeDateISO,
+                                });
+                                setShowExportModal(true);
+                              }}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                              title={`Download ${svc.name} attendance`}
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Download Sheet</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setExpandedServiceId(isExpanded ? null : svc.id)}
+                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              <span>{isExpanded ? 'Hide Roll' : 'View Roll Call'}</span>
+                              <ChevronDown
+                                className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                              />
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Roll Call Accordion */}
+                        {isExpanded && hasRecords && (
+                          <div className="pt-2 border-t border-slate-100 space-y-2 max-h-60 overflow-y-auto">
+                            <div className="text-[11px] font-bold text-slate-600 px-1">
+                              Attendees for {svc.name} ({svc.records.length})
+                            </div>
+                            {svc.records.map((r: any) => {
+                              const timeFormatted = new Date(r.createdAt).toLocaleTimeString('en-US', {
+                                timeZone: 'Africa/Lagos',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true,
+                              });
+
+                              return (
+                                <div
+                                  key={r.id}
+                                  className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between text-xs"
+                                >
+                                  <div>
+                                    <span className="font-bold text-slate-900 block">
+                                      {r.person?.firstName} {r.person?.lastName}
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 font-mono">
+                                      Arrived: <strong className="text-slate-800">{timeFormatted}</strong> &bull;{' '}
+                                      {getCategoryDisplay(r.person, r.subClass)}
+                                    </span>
+                                  </div>
+
+                                  <span
+                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                      r.method === 'QR_SELF'
+                                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    }`}
+                                  >
+                                    {r.method === 'QR_SELF' ? 'Self Check-In' : 'Usher Marked'}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -607,7 +868,7 @@ export default function AdminScorecardDashboard() {
                               </td>
                               <td className="p-3.5 text-slate-600">
                                 <span className="px-2 py-0.5 bg-slate-100 rounded-md font-semibold text-[11px]">
-                                  {r.person?.category}
+                                  {getCategoryDisplay(r.person, r.subClass)}
                                 </span>
                               </td>
                               <td className="p-3.5 font-semibold text-blue-700">

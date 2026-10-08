@@ -15,6 +15,7 @@ import {
   getAllChurchServicesAction,
   updateServiceScheduleAction,
 } from '../actions/admin';
+import { formatTime12 } from '@/lib/service-resolver';
 
 export interface ManageServicesModalProps {
   isOpen: boolean;
@@ -155,7 +156,7 @@ export default function ManageServicesModal({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end">
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      Start Time
+                      Start Time {svc.startTime && <span className="text-blue-600 font-semibold font-sans">({formatTime12(svc.startTime)})</span>}
                     </label>
                     <input
                       type="time"
@@ -167,7 +168,7 @@ export default function ManageServicesModal({
 
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      End Time
+                      End Time {svc.endTime && <span className="text-blue-600 font-semibold font-sans">({formatTime12(svc.endTime)})</span>}
                     </label>
                     <input
                       type="time"

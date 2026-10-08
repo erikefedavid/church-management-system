@@ -2,16 +2,24 @@
 
 import { prisma } from '@/lib/prisma';
 import { PersonStatus, CheckInMethod, DayOfWeek } from '@prisma/client';
+import { getNigerianTimeInfo, getActiveChurchService } from '@/lib/service-resolver';
 
 export interface ServiceScorecard {
   id: string;
   name: string;
   startTime: string;
   endTime: string;
+  dayOfWeek?: DayOfWeek;
   totalPresent: number;
   adultCount?: number;
   youthCount?: number;
+  workersCount?: number;
+  adultSundaySchoolCount?: number;
+  youthSundaySchoolCount?: number;
+  firstTimersCount?: number;
   hasSubClasses: boolean;
+  status: 'LIVE' | 'CONCLUDED' | 'UPCOMING';
+  records: any[];
 }
 
 export interface FirstTimerEntry {
@@ -24,13 +32,14 @@ export interface FirstTimerEntry {
   category: string;
 }
 
-export type AdminTimeRange = 'TODAY' | '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '1_YEAR';
+export type AdminTimeRange = 'TODAY' | 'CUSTOM_DATE' | '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '1_YEAR';
 
 export interface CategoryBreakdown {
   totalWorkers: number;
   totalYouth: number;
   totalAdults: number;
-  totalChildren: number;
+  youthSundaySchool: number;
+  adultSundaySchool: number;
   totalFirstTimers: number;
 }
 
@@ -45,7 +54,16 @@ export interface AdminScorecardResponse {
   error?: string;
   churchName?: string;
   todayDateString?: string;
+  activeDateFormatted?: string;
+  activeDateISO?: string;
   timeRangeLabel?: string;
+  isLiveNow?: boolean;
+  activeService?: {
+    id: string;
+    name: string;
+    startTime: string;
+    endTime: string;
+  } | null;
   totalUniqueAttendees?: number;
   totalFirstTimers?: number;
   selfScanPercentage?: number;
@@ -57,10 +75,11 @@ export interface AdminScorecardResponse {
 }
 
 /**
- * Computes live Sunday or historical (1m, 3m, 6m, 1yr) attendance statistics for leadership.
+ * Computes live Sunday or historical (specific date, 1m, 3m, 6m, 1yr) attendance statistics for leadership.
  */
 export async function getAdminScorecardAction(
-  timeRange: AdminTimeRange = 'TODAY'
+  timeRange: AdminTimeRange = 'TODAY',
+  customDate?: string // YYYY-MM-DD
 ): Promise<AdminScorecardResponse> {
   try {
     const church = await prisma.church.findFirst();
@@ -72,13 +91,41 @@ export async function getAdminScorecardAction(
     const today = new Date(now);
     today.setHours(0, 0, 0, 0);
 
-    const tomorrow = new Date(today);
+    let tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const ngInfo = getNigerianTimeInfo(now);
+    const activeRes = await getActiveChurchService(church.id, now);
 
     let startDate = today;
     let timeRangeLabel = 'Today';
+    let targetDayOfWeek: DayOfWeek = ngInfo.weekday;
 
-    if (timeRange === '1_MONTH') {
+    if (customDate) {
+      const parsed = new Date(customDate);
+      parsed.setHours(0, 0, 0, 0);
+      startDate = parsed;
+      const parsedEnd = new Date(parsed);
+      parsedEnd.setDate(parsedEnd.getDate() + 1);
+      tomorrow = parsedEnd;
+
+      const dayNames: DayOfWeek[] = [
+        'SUNDAY',
+        'MONDAY',
+        'TUESDAY',
+        'WEDNESDAY',
+        'THURSDAY',
+        'FRIDAY',
+        'SATURDAY',
+      ];
+      targetDayOfWeek = dayNames[parsed.getDay()];
+      timeRangeLabel = `Date: ${parsed.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })}`;
+    } else if (timeRange === '1_MONTH') {
       startDate = new Date(today);
       startDate.setDate(startDate.getDate() - 30);
       timeRangeLabel = 'Past 30 Days (1 Month)';
@@ -96,8 +143,8 @@ export async function getAdminScorecardAction(
       timeRangeLabel = 'Past Year (Annual)';
     }
 
-    // 1. Fetch all services for this church
-    const services = await prisma.serviceSchedule.findMany({
+    // 1. Fetch services for this church
+    const allServices = await prisma.serviceSchedule.findMany({
       where: { churchId: church.id },
       orderBy: { startTime: 'asc' },
     });
@@ -116,14 +163,58 @@ export async function getAdminScorecardAction(
         serviceSchedule: true,
       },
       orderBy: { createdAt: 'desc' },
-      take: 2000,
+      take: 2500,
     });
 
-    // 3. Compute unique people who attended church in this window
+    // 3. Filter services to show based on timeframe
+    let targetServices = allServices;
+    if (customDate) {
+      const dayServices = allServices.filter((s) => s.dayOfWeek === targetDayOfWeek);
+      const serviceIdsWithRecords = new Set(records.map((r) => r.serviceScheduleId));
+      const otherServices = allServices.filter(
+        (s) => !dayServices.some((ds) => ds.id === s.id) && serviceIdsWithRecords.has(s.id)
+      );
+      targetServices = [...dayServices, ...otherServices];
+    } else if (timeRange === 'TODAY') {
+      // Prioritize services for today's weekday, plus any service that has attendance logged today
+      const todayWeekdayServices = allServices.filter((s) => s.dayOfWeek === ngInfo.weekday);
+      const serviceIdsWithRecords = new Set(records.map((r) => r.serviceScheduleId));
+
+      let filteredToday = todayWeekdayServices;
+      if (ngInfo.weekday === 'SUNDAY') {
+        const isThanksgiving = activeRes.isFirstSunday;
+        if (isThanksgiving) {
+          filteredToday = todayWeekdayServices.filter(
+            (s) =>
+              s.name.toLowerCase().includes('thanksgiving') ||
+              s.name.toLowerCase().includes('sunday school (thanksgiving)') ||
+              s.name.toLowerCase().includes('workers')
+          );
+        } else {
+          filteredToday = todayWeekdayServices.filter(
+            (s) => !s.name.toLowerCase().includes('thanksgiving')
+          );
+        }
+      }
+
+      // Combine scheduled today with any non-scheduled service that has attendance today
+      const otherServicesWithAttendance = allServices.filter(
+        (s) => !filteredToday.some((ft) => ft.id === s.id) && serviceIdsWithRecords.has(s.id)
+      );
+
+      targetServices = [...filteredToday, ...otherServicesWithAttendance];
+    } else {
+      // In historical view, prioritize services that actually had attendees
+      const serviceIdsWithRecords = new Set(records.map((r) => r.serviceScheduleId));
+      const servicesWithAttendance = allServices.filter((s) => serviceIdsWithRecords.has(s.id));
+      targetServices = servicesWithAttendance.length > 0 ? servicesWithAttendance : allServices;
+    }
+
+    // 4. Compute unique people who attended church in this window
     const uniquePersonIds = new Set(records.map((r) => r.personId));
     const totalUniqueAttendees = uniquePersonIds.size;
 
-    // 4. Compute First-Timers captured in this timeframe
+    // 5. Compute First-Timers captured in this timeframe
     const timeframeFirstTimers = await prisma.person.findMany({
       where: {
         churchId: church.id,
@@ -152,45 +243,151 @@ export async function getAdminScorecardAction(
       };
     });
 
-    // 5. Category Breakdown for Excel/Auditing
+    // 6. Category Breakdown for Excel/Auditing (Workers, Youth, Adults, Sunday School, First-Timers)
+    // A worker is a worker whether youth or adult - all united under totalWorkers
+    const totalWorkers = records.filter(
+      (r) =>
+        r.person?.category === 'WORKER' ||
+        r.person?.subCategory === 'WORKER' ||
+        r.person?.subCategory === 'YOUTH_WORKER' ||
+        r.person?.subCategory === 'ADULT_WORKER'
+    ).length;
+
+    // Total youth attendees (excluding workers)
+    const totalYouth = records.filter(
+      (r) =>
+        (r.person?.category === 'YOUTH' || r.person?.subCategory === 'YOUTH') &&
+        r.person?.category !== 'WORKER' &&
+        r.person?.subCategory !== 'WORKER' &&
+        r.person?.subCategory !== 'YOUTH_WORKER'
+    ).length;
+
+    // Total adult attendees (excluding workers)
+    const totalAdults = records.filter(
+      (r) =>
+        (r.person?.category === 'ADULT' || r.person?.subCategory === 'ADULT') &&
+        r.person?.category !== 'WORKER' &&
+        r.person?.subCategory !== 'WORKER' &&
+        r.person?.subCategory !== 'ADULT_WORKER'
+    ).length;
+
+    const youthSundaySchool = records.filter(
+      (r) =>
+        r.subClass === 'YOUTH' ||
+        (r.serviceSchedule?.hasSubClasses &&
+          (r.person?.category === 'YOUTH' || r.person?.subCategory === 'YOUTH' || r.person?.subCategory === 'YOUTH_WORKER'))
+    ).length;
+
+    const adultSundaySchool = records.filter(
+      (r) =>
+        r.subClass === 'ADULT' ||
+        (r.serviceSchedule?.hasSubClasses &&
+          (r.person?.category === 'ADULT' ||
+            r.person?.subCategory === 'ADULT' ||
+            r.person?.category === 'WORKER' ||
+            r.person?.subCategory === 'ADULT_WORKER'))
+    ).length;
+
     const categoryBreakdown: CategoryBreakdown = {
-      totalWorkers: records.filter((r) => r.person?.category === 'WORKER').length,
-      totalYouth: records.filter((r) => r.person?.category === 'YOUTH' || r.subClass === 'YOUTH').length,
-      totalAdults: records.filter((r) => r.person?.category === 'ADULT').length,
-      totalChildren: records.filter((r) => r.person?.category === 'CHILD').length,
+      totalWorkers,
+      totalYouth,
+      totalAdults,
+      youthSundaySchool,
+      adultSundaySchool,
       totalFirstTimers: timeframeFirstTimers.length,
     };
 
-    // 6. Compute Service Breakdown
-    const servicesBreakdown: ServiceScorecard[] = services.map((svc) => {
+    // 7. Compute Service Breakdown
+    const [curH, curM] = ngInfo.currentTimeString.split(':').map(Number);
+    const currentMins = curH * 60 + curM;
+
+    const servicesBreakdown: ServiceScorecard[] = targetServices.map((svc) => {
       const recordsForSvc = records.filter((r) => r.serviceScheduleId === svc.id);
       const totalPresent = recordsForSvc.length;
 
-      let adultCount = 0;
-      let youthCount = 0;
+      const [sh, sm] = svc.startTime.split(':').map(Number);
+      const [eh, em] = svc.endTime.split(':').map(Number);
+      const endMins = eh * 60 + em;
 
-      if (svc.hasSubClasses) {
-        adultCount = recordsForSvc.filter((r) => r.subClass === 'ADULT').length;
-        youthCount = recordsForSvc.filter((r) => r.subClass === 'YOUTH').length;
+      let status: 'LIVE' | 'CONCLUDED' | 'UPCOMING' = 'UPCOMING';
+      if (timeRange === 'TODAY' && !customDate) {
+        if (activeRes.isLiveNow && activeRes.activeService?.id === svc.id) {
+          status = 'LIVE';
+        } else if (currentMins >= endMins || totalPresent > 0) {
+          status = 'CONCLUDED';
+        }
+      } else {
+        status = 'CONCLUDED';
       }
+
+      // Adult & Youth Sunday School counts
+      const adultSundaySchoolCount = recordsForSvc.filter(
+        (r) =>
+          r.subClass === 'ADULT' ||
+          r.person?.subCategory === 'ADULT' ||
+          r.person?.subCategory === 'ADULT_WORKER' ||
+          r.person?.category === 'ADULT' ||
+          r.person?.category === 'WORKER'
+      ).length;
+
+      const youthSundaySchoolCount = recordsForSvc.filter(
+        (r) =>
+          r.subClass === 'YOUTH' ||
+          r.person?.subCategory === 'YOUTH' ||
+          r.person?.subCategory === 'YOUTH_WORKER' ||
+          r.person?.category === 'YOUTH'
+      ).length;
+
+      const workersCount = recordsForSvc.filter(
+        (r) =>
+          r.person?.category === 'WORKER' ||
+          r.person?.subCategory === 'WORKER' ||
+          r.person?.subCategory === 'YOUTH_WORKER' ||
+          r.person?.subCategory === 'ADULT_WORKER'
+      ).length;
+
+      const youthCount = recordsForSvc.filter(
+        (r) =>
+          (r.person?.category === 'YOUTH' || r.person?.subCategory === 'YOUTH') &&
+          r.person?.category !== 'WORKER' &&
+          r.person?.subCategory !== 'WORKER' &&
+          r.person?.subCategory !== 'YOUTH_WORKER'
+      ).length;
+
+      const adultCount = recordsForSvc.filter(
+        (r) =>
+          (r.person?.category === 'ADULT' || r.person?.subCategory === 'ADULT') &&
+          r.person?.category !== 'WORKER' &&
+          r.person?.subCategory !== 'WORKER' &&
+          r.person?.subCategory !== 'ADULT_WORKER'
+      ).length;
+
+      const firstTimersCount = recordsForSvc.filter((r) => r.person?.status === 'FIRST_TIMER').length;
 
       return {
         id: svc.id,
         name: svc.name,
         startTime: svc.startTime,
         endTime: svc.endTime,
+        dayOfWeek: svc.dayOfWeek,
         totalPresent,
-        adultCount: svc.hasSubClasses ? adultCount : undefined,
-        youthCount: svc.hasSubClasses ? youthCount : undefined,
+        adultCount,
+        youthCount,
+        workersCount,
+        adultSundaySchoolCount,
+        youthSundaySchoolCount,
+        firstTimersCount,
         hasSubClasses: svc.hasSubClasses,
+        status,
+        records: recordsForSvc,
       };
     });
 
-    // 7. Compute Self-Scan vs Usher-Manual Ratio
+    // 8. Compute Self-Scan vs Usher-Manual Ratio
     const selfScanCount = records.filter((r) => r.method === CheckInMethod.QR_SELF).length;
     const selfScanPercentage = records.length > 0 ? Math.round((selfScanCount / records.length) * 100) : 0;
 
-    // 8. Compute Daily/Sunday Trend
+    // 9. Compute Daily/Sunday Trend
     const dayMap = new Map<string, { formattedDate: string; count: number }>();
     for (const rec of records) {
       const d = new Date(rec.date);
@@ -213,16 +410,31 @@ export async function getAdminScorecardAction(
       }))
       .reverse();
 
+    const displayDate = customDate ? new Date(customDate) : today;
+    const activeDateFormatted = displayDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const activeDateISO = customDate || today.toISOString().slice(0, 10);
+
     return {
       success: true,
       churchName: church.name,
-      todayDateString: today.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
+      todayDateString: activeDateFormatted,
+      activeDateFormatted,
+      activeDateISO,
       timeRangeLabel,
+      isLiveNow: activeRes.isLiveNow,
+      activeService: activeRes.activeService
+        ? {
+            id: activeRes.activeService.id,
+            name: activeRes.activeService.name,
+            startTime: activeRes.activeService.startTime,
+            endTime: activeRes.activeService.endTime,
+          }
+        : null,
       totalUniqueAttendees,
       totalFirstTimers: timeframeFirstTimers.length,
       selfScanPercentage,

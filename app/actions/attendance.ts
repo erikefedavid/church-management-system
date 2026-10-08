@@ -189,11 +189,52 @@ export async function selfCheckInAction({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const [person, targetSchedule] = await Promise.all([
+      prisma.person.findUnique({ where: { id: personId } }),
+      prisma.serviceSchedule.findUnique({ where: { id: serviceScheduleId } }),
+    ]);
+
+    if (!person || !targetSchedule) {
+      return { success: false, error: 'Member or Service not found.' };
+    }
+
+    let actualScheduleId = serviceScheduleId;
+    let actualSchedule = targetSchedule;
+    let isEarlyBird = false;
+
+    // Intelligent check: Workers' Meeting is strictly for workers.
+    // If a non-worker (Adult or Youth) arrives early during Workers' Meeting,
+    // gracefully route their check-in to First Service (or Thanksgiving Service) so Workers' Meeting remains pure!
+    if (targetSchedule.name.toLowerCase().includes('workers')) {
+      const isWorker =
+        person.category === 'WORKER' ||
+        person.subCategory === 'WORKER' ||
+        person.subCategory === 'YOUTH_WORKER' ||
+        person.subCategory === 'ADULT_WORKER';
+
+      if (!isWorker) {
+        const nextService = await prisma.serviceSchedule.findFirst({
+          where: {
+            churchId: church.id,
+            dayOfWeek: targetSchedule.dayOfWeek,
+            startTime: { gt: targetSchedule.startTime },
+          },
+          orderBy: { startTime: 'asc' },
+        });
+
+        if (nextService) {
+          actualScheduleId = nextService.id;
+          actualSchedule = nextService;
+          isEarlyBird = true;
+        }
+      }
+    }
+
     // Check if already checked in today for this service
     const existing = await prisma.attendanceRecord.findFirst({
       where: {
         personId,
-        serviceScheduleId,
+        serviceScheduleId: actualScheduleId,
         date: today,
       },
     });
@@ -202,7 +243,9 @@ export async function selfCheckInAction({
       return {
         success: false,
         alreadyCheckedIn: true,
-        error: 'Attendance already recorded! You have already marked your attendance for this service today.',
+        error: isEarlyBird
+          ? `Early arrival already recorded! You are already checked in for ${actualSchedule.name} today.`
+          : `Attendance already recorded! You have already marked your attendance for ${actualSchedule.name} today.`,
       };
     }
 
@@ -211,7 +254,7 @@ export async function selfCheckInAction({
       data: {
         churchId: church.id,
         personId,
-        serviceScheduleId,
+        serviceScheduleId: actualScheduleId,
         date: today,
         subClass: subClass || null,
         method: CheckInMethod.QR_SELF,
@@ -225,7 +268,12 @@ export async function selfCheckInAction({
     return {
       success: true,
       alreadyCheckedIn: false,
-      message: `Welcome, ${record.person.firstName}! You have been checked in for ${record.serviceSchedule.name}.`,
+      isEarlyBird,
+      serviceId: actualSchedule.id,
+      serviceName: actualSchedule.name,
+      message: isEarlyBird
+        ? `Early arrival confirmed! Welcome, ${record.person.firstName}. Your attendance has been logged for ${actualSchedule.name}.`
+        : `Welcome, ${record.person.firstName}! You have been checked in for ${record.serviceSchedule.name}.`,
     };
   } catch (error) {
     console.error('Error during self check-in:', error);
@@ -283,6 +331,7 @@ export async function registerFirstTimerAction({
           phone: cleanPhone,
           phoneLast4: phoneLast4,
           category,
+          subCategory: category === PersonCategory.YOUTH ? 'YOUTH' : 'ADULT',
           status: PersonStatus.FIRST_TIMER,
         },
       });
