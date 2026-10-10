@@ -22,6 +22,7 @@ import {
   ChevronDown,
   GraduationCap,
   BookOpen,
+  HeartHandshake,
 } from 'lucide-react';
 import {
   getAdminScorecardAction,
@@ -343,6 +344,16 @@ export default function AdminScorecardDashboard() {
               <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
+
+            {/* Follow-Up & Care Hub Button */}
+            <Link
+              href="/followup"
+              className="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-3 py-2 rounded-xl border border-emerald-300 font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Open Volunteer Calling & Automated Follow-up Desk"
+            >
+              <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Follow-Up Desk</span>
+            </Link>
 
             {/* Export Excel / CSV Button */}
             <button
