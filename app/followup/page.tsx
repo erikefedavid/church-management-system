@@ -39,6 +39,8 @@ import Toast from '../components/Toast';
 import AmbientBackground from '../components/AmbientBackground';
 
 export default function FollowUpDeskPage() {
+  const [mounted, setMounted] = useState(false);
+  const [currentWeekLabel, setCurrentWeekLabel] = useState('');
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState<FollowUpOverviewData | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -82,8 +84,10 @@ export default function FollowUpDeskPage() {
     message: string;
   } | null>(null);
 
-  // Check existing session
+  // Check existing session on client mount
   useEffect(() => {
+    setMounted(true);
+    setCurrentWeekLabel(new Date().toLocaleDateString('en-GB', { month: 'short', day: 'numeric' }));
     if (typeof window !== 'undefined') {
       const savedAuth = sessionStorage.getItem('rccg_admin_auth');
       const savedCaller = localStorage.getItem('rccg_caller_name');
@@ -254,7 +258,20 @@ export default function FollowUpDeskPage() {
     }
   }
 
-  // 1. PIN Gate: Prompt for Leadership / Caller PIN
+  // 1. SSR / Hydration Gate
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+        <AmbientBackground />
+        <div className="relative z-10 text-center space-y-3">
+          <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-xs text-slate-500 font-medium">Opening Follow-Up Care Desk...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. PIN Gate: Prompt for Leadership / Caller PIN
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
@@ -262,7 +279,7 @@ export default function FollowUpDeskPage() {
 
         <div className="relative z-10 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-3xl p-8 max-w-sm w-full shadow-xl space-y-6 text-center">
           <div className="relative w-16 h-16 mx-auto">
-            <Image src="/rccg-logo.png" alt="RCCG" fill className="object-contain" priority />
+            <Image src="/rccg-logo.png" alt="RCCG" fill sizes="64px" className="object-contain" priority />
           </div>
 
           <div className="space-y-1">
@@ -330,7 +347,7 @@ export default function FollowUpDeskPage() {
           <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
             <div className="flex items-center gap-2.5">
               <div className="relative w-8 h-8 shrink-0">
-                <Image src="/rccg-logo.png" alt="RCCG" fill className="object-contain" priority />
+                <Image src="/rccg-logo.png" alt="RCCG" fill sizes="32px" className="object-contain" priority />
               </div>
               <div>
                 <h1 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
@@ -338,8 +355,12 @@ export default function FollowUpDeskPage() {
                 </h1>
                 <p className="text-[11px] text-blue-700 font-semibold flex items-center gap-1">
                   <span>RCCG Jesus Covenant Zone</span>
-                  <span>•</span>
-                  <span>Week {new Date().toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}</span>
+                  {currentWeekLabel && (
+                    <>
+                      <span>•</span>
+                      <span>{currentWeekLabel}</span>
+                    </>
+                  )}
                 </p>
               </div>
             </div>

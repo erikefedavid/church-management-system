@@ -439,7 +439,7 @@ export async function logFollowUpResultAction({
 /**
  * 4. Helper: Format Nigerian phone number into international WhatsApp format (e.g. 080... -> 23480...)
  */
-export function formatToWhatsAppPhone(phone: string): string {
+function formatToWhatsAppPhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
   if (digits.startsWith('0')) {
     return `234${digits.slice(1)}`;
