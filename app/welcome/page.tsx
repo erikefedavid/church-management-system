@@ -84,7 +84,7 @@ const WEEKLY_SERVICES = [
 export default function AttendanceProofPage() {
   const router = useRouter();
   const [slip, setSlip] = useState<AttendanceSlip | null>(null);
-  const [showWeeklyServices, setShowWeeklyServices] = useState<boolean>(true);
+  const [showWeeklyServices, setShowWeeklyServices] = useState<boolean>(false);
   const [nextLiveService, setNextLiveService] = useState<any>(null);
 
   // Read stored check-in and listen for next service transitions

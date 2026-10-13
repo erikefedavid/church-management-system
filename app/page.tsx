@@ -424,12 +424,9 @@ export default function MemberCheckInPortal() {
 
       setSelectedMember(person);
       setFeedbackMessage({ type: 'success', text: res.message || 'Check-in confirmed!' });
-      setStep('SUCCESS');
-
-      // Automatically navigate worshipper to Sunday Worship Hub & Attendance Pass (replace history)
-      setTimeout(() => {
-        router.replace('/welcome');
-      }, 1400);
+      
+      // Navigate immediately to Sunday Worship Hub & Attendance Pass
+      router.replace('/welcome');
     } else {
       setFeedbackMessage({ type: 'error', text: res.error || 'Check-in failed.' });
     }

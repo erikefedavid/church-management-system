@@ -30,25 +30,31 @@ export async function usherGetServicesAction() {
     const todayServices = activeRes.todayServices;
     const otherServices = services.filter((s) => !todayServices.some((ts) => ts.id === s.id));
 
-    const defaultServiceId =
-      activeRes.activeService?.id ||
-      (todayServices.length > 0 ? todayServices[0].id : services[0]?.id || '');
-
-    // Check if any service just finished recently today
+    // Check if any service just finished recently today or completed earlier
     const currentMins = (() => {
       const [h, m] = ngInfo.currentTimeString.split(':').map(Number);
       return h * 60 + m;
     })();
 
     let justFinishedService = null;
+    let latestCompletedService = null;
     for (const svc of todayServices) {
       const [eh, em] = svc.endTime.split(':').map(Number);
       const endMins = eh * 60 + em;
-      // Ended within the last 120 minutes
-      if (currentMins >= endMins && currentMins - endMins <= 120) {
-        justFinishedService = svc;
+      if (currentMins >= endMins) {
+        latestCompletedService = svc;
+        // Ended within the last 120 minutes
+        if (currentMins - endMins <= 120) {
+          justFinishedService = svc;
+        }
       }
     }
+
+    const defaultServiceId =
+      activeRes.activeService?.id ||
+      justFinishedService?.id ||
+      latestCompletedService?.id ||
+      (todayServices.length > 0 ? todayServices[0].id : services[0]?.id || '');
 
     return {
       success: true,

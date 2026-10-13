@@ -77,7 +77,11 @@ export function getNigerianTimeInfo(date: Date = new Date()) {
  */
 export function formatTime12(timeStr?: string): string {
   if (!timeStr) return '';
-  const parts = timeStr.trim().split(':');
+  const clean = timeStr.trim();
+  if (/am|pm/i.test(clean)) {
+    return clean.toUpperCase();
+  }
+  const parts = clean.split(':');
   if (parts.length < 2) return timeStr;
   const h = parseInt(parts[0], 10);
   const m = parseInt(parts[1], 10);

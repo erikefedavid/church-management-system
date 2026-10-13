@@ -87,11 +87,11 @@ export async function getActiveServiceAction(overrideTime?: string): Promise<Act
           longitude: fallbackChurch.longitude,
           geofenceRadius: fallbackChurch.geofenceRadius,
         },
-        activeService: fallbackSchedule || null,
+        activeService: null,
         todayServices: fallbackSchedule ? [fallbackSchedule] : [],
         currentDay: 'SUNDAY',
         currentTimeString: '09:00',
-        portalSubtitle: 'Attendance Portal',
+        portalSubtitle: 'Attendance Portal (Off-Hours)',
         isLiveNow: false,
       };
     }
