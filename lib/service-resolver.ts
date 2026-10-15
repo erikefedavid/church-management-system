@@ -171,12 +171,16 @@ export function getServiceBufferEndTime(serviceName: string, officialEndTime: st
   const lower = serviceName.toLowerCase();
   let bufferMinutes = 0; // Strictly 0 grace for First Service and Sunday School (normal time)
 
-  if (lower.includes('second service') || lower.includes('thanksgiving service')) {
-    bufferMinutes = 120; // 2 hours grace buffer for Sunday main services (allows check-in up to 2:00 PM / 14:00)
-  } else if (lower.includes('hour of mercy')) {
-    bufferMinutes = 45; // 45 minutes grace buffer for Saturday Hour of Mercy (up to 9:45 AM)
-  } else if (lower.includes('digging deep') || lower.includes('faith clinic') || lower.includes('youth') || lower.includes('oth')) {
-    bufferMinutes = 60; // 1 hour grace buffer for evening programs (up to 7:00 PM / 19:00 or 8:00 PM)
+  if (
+    lower.includes('second service') ||
+    lower.includes('thanksgiving service') ||
+    lower.includes('hour of mercy') ||
+    lower.includes('digging deep') ||
+    lower.includes('faith clinic') ||
+    lower.includes('youth') ||
+    lower.includes('oth')
+  ) {
+    bufferMinutes = 20; // Exactly 20 minutes extra grace buffer (not 2 hours)
   }
 
   const totalMinutes = endHour * 60 + endMinute + bufferMinutes;
