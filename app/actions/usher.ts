@@ -1,8 +1,14 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { getActiveChurchService, getNigerianTimeInfo } from '@/lib/service-resolver';
+import {
+  getActiveChurchService,
+  getNigerianTimeInfo,
+  getNigerianDateMidnight,
+  parseDateStringToMidnight,
+} from '@/lib/service-resolver';
 import { CheckInMethod, PersonCategory, PersonStatus } from '@prisma/client';
+import { requireStaffSession } from './auth';
 
 /**
  * 1. Fetch church service schedules with intelligent grouping.
@@ -85,13 +91,17 @@ export async function usherGetServicesAction() {
  */
 export async function usherGetRosterAction(serviceScheduleId?: string) {
   try {
+    const auth = await requireStaffSession(['USHER', 'ADMIN']);
+    if (!auth.authorized) {
+      return { success: false, error: auth.error || 'Unauthorized staff access.' };
+    }
+
     const church = await prisma.church.findFirst();
     if (!church) {
       return { success: false, error: 'Church not found.' };
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getNigerianDateMidnight();
 
     // Fetch all active members ordered alphabetically A to Z
     const people = await prisma.person.findMany({
@@ -267,8 +277,7 @@ export async function usherCheckInAction({
       }
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getNigerianDateMidnight();
 
     // Check if already checked in today for this service
     const existing = await prisma.attendanceRecord.findFirst({
@@ -383,8 +392,7 @@ export async function usherGetTodayAttendanceAction(serviceScheduleId?: string) 
       return { success: false, error: 'Church not found.' };
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getNigerianDateMidnight();
 
     const whereClause: any = {
       churchId: church.id,
@@ -592,9 +600,7 @@ export async function usherGetAttendanceHistoryAction({
     };
 
     if (targetDate) {
-      const parsedDate = new Date(targetDate);
-      parsedDate.setHours(0, 0, 0, 0);
-      whereClause.date = parsedDate;
+      whereClause.date = parseDateStringToMidnight(targetDate);
     }
 
     if (serviceScheduleId) {
@@ -706,8 +712,7 @@ export async function usherGetTodayServicesSummaryAction() {
     }
 
     const ngInfo = getNigerianTimeInfo(new Date());
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getNigerianDateMidnight();
 
     const activeRes = await getActiveChurchService(church.id, new Date());
 

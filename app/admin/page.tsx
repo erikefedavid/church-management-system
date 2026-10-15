@@ -29,6 +29,7 @@ import {
   AdminScorecardResponse,
   AdminTimeRange,
 } from '../actions/admin';
+import { loginAction, checkSessionAction } from '../actions/auth';
 import Toast from '../components/Toast';
 import CustomDropdown from '../components/CustomDropdown';
 import ExportExcelModal from '../components/ExportExcelModal';
@@ -84,15 +85,22 @@ export default function AdminScorecardDashboard() {
   } | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const auth = sessionStorage.getItem('rccg_admin_auth');
-      if (auth === 'true') {
+    checkSessionAction().then((sessionRes) => {
+      if (sessionRes.role === 'ADMIN') {
         setIsAuthenticated(true);
         loadScorecard('TODAY');
         return;
       }
-    }
-    setLoading(false);
+      if (typeof window !== 'undefined') {
+        const auth = sessionStorage.getItem('rccg_admin_auth');
+        if (auth === 'true') {
+          setIsAuthenticated(true);
+          loadScorecard('TODAY');
+          return;
+        }
+      }
+      setLoading(false);
+    });
   }, []);
 
   async function loadScorecard(range: AdminTimeRange = timeRange, dateStr: string = selectedDate) {
@@ -117,9 +125,11 @@ export default function AdminScorecardDashboard() {
     loadScorecard(newRange, '');
   }
 
-  function handlePinSubmit(e: React.FormEvent) {
+  async function handlePinSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (pinInput === '1234' || pinInput === '7777') {
+    const cleanPin = pinInput.trim();
+    const res = await loginAction({ role: 'ADMIN', password: cleanPin });
+    if (res.success) {
       setIsAuthenticated(true);
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('rccg_admin_auth', 'true');

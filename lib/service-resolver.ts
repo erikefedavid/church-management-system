@@ -73,6 +73,36 @@ export function getNigerianTimeInfo(date: Date = new Date()) {
 }
 
 /**
+ * Returns a Date object normalized to 00:00:00.000 UTC for the current Nigerian calendar day.
+ * Ensures consistent daily uniqueness in database queries across all servers (local, Vercel, AWS).
+ */
+export function getNigerianDateMidnight(date: Date = new Date()): Date {
+  const info = getNigerianTimeInfo(date);
+  return new Date(Date.UTC(info.year, info.month - 1, info.dayOfMonth, 0, 0, 0, 0));
+}
+
+/**
+ * Returns the YYYY-MM-DD string for Nigerian calendar day.
+ */
+export function getNigerianDateString(date: Date = new Date()): string {
+  const info = getNigerianTimeInfo(date);
+  const m = String(info.month).padStart(2, '0');
+  const d = String(info.dayOfMonth).padStart(2, '0');
+  return `${info.year}-${m}-${d}`;
+}
+
+/**
+ * Parses a YYYY-MM-DD date string into a UTC midnight Date object without timezone shift.
+ */
+export function parseDateStringToMidnight(dateStr: string): Date {
+  const parts = dateStr.trim().split('-');
+  const y = Number(parts[0]);
+  const m = Number(parts[1]);
+  const d = Number(parts[2]);
+  return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
+}
+
+/**
  * Formats a 24-hour time string (e.g. "07:00", "17:00") into a clean 12-hour string with AM/PM (e.g. "07:00 AM", "05:00 PM").
  */
 export function formatTime12(timeStr?: string): string {

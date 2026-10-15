@@ -19,6 +19,7 @@ import {
   Radio,
 } from 'lucide-react';
 import { getActiveServiceAction } from '../actions/attendance';
+import { getNigerianDateString } from '@/lib/service-resolver';
 
 interface AttendanceSlip {
   personId: string;
@@ -262,7 +263,7 @@ export default function AttendanceProofPage() {
                 </span>
                 <span className="text-xs font-bold text-slate-900 flex items-center justify-center gap-1 pt-1">
                   <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                  <span>{slip?.date || new Date().toISOString().split('T')[0]}</span>
+                  <span>{slip?.date || getNigerianDateString()}</span>
                 </span>
               </div>
 

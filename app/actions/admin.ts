@@ -2,7 +2,12 @@
 
 import { prisma } from '@/lib/prisma';
 import { PersonStatus, CheckInMethod, DayOfWeek } from '@prisma/client';
-import { getNigerianTimeInfo, getActiveChurchService } from '@/lib/service-resolver';
+import {
+  getNigerianTimeInfo,
+  getActiveChurchService,
+  getNigerianDateMidnight,
+  parseDateStringToMidnight,
+} from '@/lib/service-resolver';
 
 export interface ServiceScorecard {
   id: string;
@@ -88,11 +93,8 @@ export async function getAdminScorecardAction(
     }
 
     const now = new Date();
-    const today = new Date(now);
-    today.setHours(0, 0, 0, 0);
-
-    let tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const today = getNigerianDateMidnight(now);
+    let tomorrow = new Date(today.getTime() + 86400000);
 
     const ngInfo = getNigerianTimeInfo(now);
     const activeRes = await getActiveChurchService(church.id, now);
@@ -102,12 +104,9 @@ export async function getAdminScorecardAction(
     let targetDayOfWeek: DayOfWeek = ngInfo.weekday;
 
     if (customDate) {
-      const parsed = new Date(customDate);
-      parsed.setHours(0, 0, 0, 0);
+      const parsed = parseDateStringToMidnight(customDate);
       startDate = parsed;
-      const parsedEnd = new Date(parsed);
-      parsedEnd.setDate(parsedEnd.getDate() + 1);
-      tomorrow = parsedEnd;
+      tomorrow = new Date(parsed.getTime() + 86400000);
 
       const dayNames: DayOfWeek[] = [
         'SUNDAY',
@@ -118,28 +117,25 @@ export async function getAdminScorecardAction(
         'FRIDAY',
         'SATURDAY',
       ];
-      targetDayOfWeek = dayNames[parsed.getDay()];
+      targetDayOfWeek = dayNames[parsed.getUTCDay()];
       timeRangeLabel = `Date: ${parsed.toLocaleDateString('en-US', {
+        timeZone: 'UTC',
         weekday: 'short',
         month: 'short',
         day: 'numeric',
         year: 'numeric',
       })}`;
     } else if (timeRange === '1_MONTH') {
-      startDate = new Date(today);
-      startDate.setDate(startDate.getDate() - 30);
+      startDate = new Date(today.getTime() - 30 * 86400000);
       timeRangeLabel = 'Past 30 Days (1 Month)';
     } else if (timeRange === '3_MONTHS') {
-      startDate = new Date(today);
-      startDate.setDate(startDate.getDate() - 90);
+      startDate = new Date(today.getTime() - 90 * 86400000);
       timeRangeLabel = 'Past 3 Months (Quarterly)';
     } else if (timeRange === '6_MONTHS') {
-      startDate = new Date(today);
-      startDate.setDate(startDate.getDate() - 180);
+      startDate = new Date(today.getTime() - 180 * 86400000);
       timeRangeLabel = 'Past 6 Months (Biannual)';
     } else if (timeRange === '1_YEAR') {
-      startDate = new Date(today);
-      startDate.setDate(startDate.getDate() - 365);
+      startDate = new Date(today.getTime() - 365 * 86400000);
       timeRangeLabel = 'Past Year (Annual)';
     }
 

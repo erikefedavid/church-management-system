@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 // Fixed, easy-to-remember passwords/PINs for church staff
 const USHER_PASSWORDS = ['usher20226', 'usher2026', '4444', 'usher123'];
-const ADMIN_PASSWORDS = ['pastor2026', '7777', 'admin123', 'rccg2026'];
+const ADMIN_PASSWORDS = ['pastor2026', '7777', '1234', 'admin123', 'rccg2026'];
 
 export type AuthRole = 'USHER' | 'ADMIN' | null;
 
@@ -92,3 +92,29 @@ export async function logoutAction() {
     return { success: false };
   }
 }
+
+/**
+ * 4. Server-Side Guard: Verify caller is an authorized Usher or Admin.
+ * Used inside server actions to prevent unauthenticated direct RPC access.
+ */
+export async function requireStaffSession(
+  allowedRoles: ('USHER' | 'ADMIN')[] = ['USHER', 'ADMIN']
+): Promise<{ authorized: boolean; role?: 'USHER' | 'ADMIN'; error?: string }> {
+  try {
+    const cookieStore = await cookies();
+    const roleCookie = cookieStore.get('rccg_session_role');
+    const role = roleCookie?.value as 'USHER' | 'ADMIN' | undefined;
+
+    if (!role || !allowedRoles.includes(role)) {
+      return {
+        authorized: false,
+        error: 'Unauthorized: Staff session required to perform this operation.',
+      };
+    }
+
+    return { authorized: true, role };
+  } catch (error) {
+    return { authorized: false, error: 'Session verification failed.' };
+  }
+}
+

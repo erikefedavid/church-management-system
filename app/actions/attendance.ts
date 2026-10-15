@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { isWithinChurchGeofence } from '@/lib/geo';
-import { getActiveChurchService } from '@/lib/service-resolver';
+import { getActiveChurchService, getNigerianDateMidnight } from '@/lib/service-resolver';
 import { CheckInMethod, PersonCategory, PersonStatus } from '@prisma/client';
 
 export type ActiveServiceResponse =
@@ -185,9 +185,8 @@ export async function selfCheckInAction({
       };
     }
 
-    // Set today's date at midnight for accurate daily uniqueness
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Set today's date at Nigerian midnight for accurate daily uniqueness across all servers
+    const today = getNigerianDateMidnight();
 
     const [person, targetSchedule] = await Promise.all([
       prisma.person.findUnique({ where: { id: personId } }),
@@ -309,8 +308,17 @@ export async function registerFirstTimerAction({
       return { success: false, error: 'Church not found.' };
     }
 
-    // Clean phone number and get last 4 digits
-    const cleanPhone = phone.trim().replace(/\s+/g, '');
+    const cleanFirstName = firstName.trim();
+    const cleanLastName = lastName.trim();
+    if (!cleanFirstName) {
+      return { success: false, error: 'Please enter your first name.' };
+    }
+
+    // Clean phone number: extract numeric digits only
+    const cleanPhone = phone.trim().replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      return { success: false, error: 'Please enter a valid Nigerian phone number (at least 10 digits).' };
+    }
     const phoneLast4 = cleanPhone.slice(-4);
 
     // Check if this phone already exists
@@ -326,8 +334,8 @@ export async function registerFirstTimerAction({
       person = await prisma.person.create({
         data: {
           churchId: church.id,
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
+          firstName: cleanFirstName,
+          lastName: cleanLastName || '(First-Timer)',
           phone: cleanPhone,
           phoneLast4: phoneLast4,
           category,
@@ -361,8 +369,7 @@ export async function registerFirstTimerAction({
  */
 export async function getRecentAttendanceStatsAction() {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getNigerianDateMidnight();
 
     const count = await prisma.attendanceRecord.count({
       where: { date: today },

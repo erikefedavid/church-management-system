@@ -34,7 +34,7 @@ import { isWithinChurchGeofence } from '@/lib/geo';
 import Toast from './components/Toast';
 import AmbientBackground from './components/AmbientBackground';
 import EntranceSplash from './components/EntranceSplash';
-import { formatTimeRange12 } from '@/lib/service-resolver';
+import { formatTimeRange12, getNigerianDateString } from '@/lib/service-resolver';
 import { PersonCategory } from '@prisma/client';
 
 // Weekly / Sunday Encouraging Scriptures
@@ -122,7 +122,7 @@ export default function MemberCheckInPortal() {
         const storedCheckIn = localStorage.getItem('rccg_completed_checkin');
         if (storedCheckIn) {
           const parsedCheckIn = JSON.parse(storedCheckIn);
-          const todayStr = new Date().toISOString().split('T')[0];
+          const todayStr = getNigerianDateString();
           // If the stored pass is from an earlier day, clear it so member can mark for today
           if (parsedCheckIn && parsedCheckIn.date !== todayStr) {
             localStorage.removeItem('rccg_completed_checkin');
@@ -179,9 +179,10 @@ export default function MemberCheckInPortal() {
             const storedCheckIn = localStorage.getItem('rccg_completed_checkin');
             if (storedCheckIn) {
               const parsed = JSON.parse(storedCheckIn);
-              const todayStr = new Date().toISOString().split('T')[0];
+              const todayStr = getNigerianDateString();
               if (parsed && parsed.serviceId === res.activeService.id && parsed.date === todayStr) {
                 setDeviceCheckInLock(parsed);
+                setLoading(true);
                 router.replace('/welcome');
                 return;
               } else {
@@ -501,10 +502,8 @@ export default function MemberCheckInPortal() {
       setFeedbackMessage({ type: 'success', text: (res as any).message || 'Welcome! Your attendance is recorded.' });
       setStep('SUCCESS');
 
-      // Automatically navigate worshipper to Sunday Worship Hub & Attendance Pass (replace history)
-      setTimeout(() => {
-        router.replace('/welcome');
-      }, 1400);
+      // Immediately navigate worshipper to Sunday Worship Hub & Attendance Pass (replace history)
+      router.replace('/welcome');
     } else {
       setFeedbackMessage({ type: 'error', text: res.error || 'Registration failed.' });
     }
