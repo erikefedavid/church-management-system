@@ -19,8 +19,6 @@ import {
   PhoneOff,
   History,
   Calendar,
-  Filter,
-  Lock,
   ChevronDown,
   HeartHandshake,
 } from 'lucide-react';
@@ -93,12 +91,12 @@ export default function UsherHelpDesk() {
   const [newPhoneNumber, setNewPhoneNumber] = useState('');
   const [submittingPhone, setSubmittingPhone] = useState(false);
 
-  // Add New Person modal state (Worker, Youth, Adult)
+  // Add New Person modal state (Youth-only)
   const [showAddPersonModal, setShowAddPersonModal] = useState(false);
   const [newFirstName, setNewFirstName] = useState('');
   const [newLastName, setNewLastName] = useState('');
   const [newPhone, setNewPhone] = useState('');
-  const [newRoleType, setNewRoleType] = useState<'ADULT' | 'YOUTH' | 'WORKER'>('ADULT');
+  const [newRoleType, setNewRoleType] = useState<'YOUTH'>('YOUTH');
   const [newStatus, setNewStatus] = useState<PersonStatus>(PersonStatus.MEMBER);
   const [markAttendanceImmediately, setMarkAttendanceImmediately] = useState(true);
   const [submittingNewPerson, setSubmittingNewPerson] = useState(false);
@@ -121,10 +119,20 @@ export default function UsherHelpDesk() {
     title?: string;
   } | null>(null);
 
-  // Initialize Usher Desk & Services
+  // Initialize Usher Desk & Services with 20s live auto-sync
   useEffect(() => {
     initUsherDesk();
   }, []);
+
+  useEffect(() => {
+    if (!selectedServiceId) return;
+    const interval = setInterval(() => {
+      loadRoster(selectedServiceId);
+      loadTodayAttendance(selectedServiceId);
+      loadTodayServicesSummary();
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [selectedServiceId]);
 
   async function initUsherDesk() {
     setLoading(true);
@@ -351,7 +359,7 @@ export default function UsherHelpDesk() {
       setNewFirstName('');
       setNewLastName('');
       setNewPhone('');
-      setNewRoleType('ADULT');
+      setNewRoleType('YOUTH');
       setNewStatus(PersonStatus.MEMBER);
 
       // Refresh roster, roll call, and summary
@@ -369,33 +377,18 @@ export default function UsherHelpDesk() {
     }
   }
 
-  // Helper to format role badge (Worker, Youth, Adult)
+  // Helper to format Youth role badge
   function formatRoleBadge(person: RosterMember) {
-    const subCat = person.subCategory;
-    const cat = person.category;
-    if (
-      cat === 'WORKER' ||
-      subCat === 'WORKER' ||
-      subCat === 'YOUTH_WORKER' ||
-      subCat === 'ADULT_WORKER'
-    ) {
-      return { label: 'Worker', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' };
-    }
-    if (cat === 'YOUTH' || subCat === 'YOUTH') {
+    if (person.status === 'FIRST_TIMER') {
       return { label: 'Youth', color: 'bg-amber-50 text-amber-700 border-amber-200' };
     }
-    return { label: 'Adult', color: 'bg-slate-100 text-slate-700 border-slate-200' };
+    return { label: 'Youth Member', color: 'bg-blue-50 text-blue-700 border-blue-200' };
   }
 
-  // Helper to format attendee category in roll call views
-  function getCategoryDisplay(person: any, subClass?: string | null) {
-    if (subClass) return `${subClass} Sunday School`;
+  // Helper to format attendee status in roll call views
+  function getCategoryDisplay(person: any) {
     if (person?.status === 'FIRST_TIMER') return 'First-Timer';
-    const sub = person?.subCategory;
-    const cat = person?.category;
-    if (cat === 'WORKER' || sub === 'WORKER' || sub === 'YOUTH_WORKER' || sub === 'ADULT_WORKER') return 'Worker';
-    if (cat === 'YOUTH' || sub === 'YOUTH') return 'Youth';
-    return 'Adult';
+    return 'Youth Member';
   }
 
   const historyServiceOptions = useMemo(() => {
@@ -409,14 +402,8 @@ export default function UsherHelpDesk() {
     ];
   }, [services]);
 
-  const roleOptions = [
-    { value: 'WORKER', label: 'Worker' },
-    { value: 'YOUTH', label: 'Youth' },
-    { value: 'ADULT', label: 'Adult' },
-  ];
-
   const statusOptions = [
-    { value: 'MEMBER', label: 'Church Member (Existing)' },
+    { value: 'MEMBER', label: 'Youth Member (Existing)' },
     { value: 'FIRST_TIMER', label: 'First-Timer (Visitor)' },
   ];
 
@@ -488,10 +475,10 @@ export default function UsherHelpDesk() {
             <div>
               <h1 className="text-sm font-bold text-slate-900 flex items-center gap-1.5 leading-none">
                 <Shield className="w-4 h-4 text-blue-600" />
-                <span>RCCG Usher Desk</span>
+                <span>RCCG Youth Usher Desk</span>
               </h1>
               <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                Assisted Check-In & Attendance Roster
+                Youth Check-In & Attendance Roster
               </p>
             </div>
           </div>
@@ -574,7 +561,7 @@ export default function UsherHelpDesk() {
                 {activeService.name} is Currently Active ({formatTimeRange12(activeService.startTime, activeService.endTime)})
               </span>
               <span className="text-[11px] text-emerald-800">
-                Check-ins are streaming live in West Africa Time ({nigerianTimeFormatted}).
+                Check-ins are streaming live ({nigerianTimeFormatted}).
               </span>
             </div>
           </div>
@@ -631,7 +618,7 @@ export default function UsherHelpDesk() {
 
             <div className="text-right">
               <span className="text-[11px] text-slate-500 font-medium">
-                {currentDay ? `${currentDay} • West Africa Time` : 'West Africa Time'}
+                {currentDay || 'Live Schedule'}
               </span>
             </div>
           </div>
@@ -870,7 +857,6 @@ export default function UsherHelpDesk() {
                 {todayServicesSummary.map((svc) => {
                   const isExpanded = expandedServiceId === svc.id;
                   const hasRecords = svc.totalCount > 0;
-                  const isSundaySchool = svc.hasSubClasses || svc.name.toLowerCase().includes('sunday school');
 
                   return (
                     <div
@@ -946,37 +932,13 @@ export default function UsherHelpDesk() {
                         </div>
                       </div>
 
-                      {/* Demographic Breakdown Pills */}
+                      {/* Youth Breakdown Pills */}
                       {hasRecords ? (
                         <div className="flex flex-wrap gap-1.5 text-[11px]">
-                          {/* If Sunday School, show Adult Sunday School and Youth Sunday School specifically! */}
-                          {isSundaySchool ? (
-                            <>
-                              <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-lg font-medium">
-                                Adult Sunday School: <strong>{svc.adultSundaySchoolCount}</strong>
-                              </span>
-                              <span className="bg-purple-50 text-purple-800 border border-purple-200 px-2 py-0.5 rounded-lg font-medium">
-                                Youth Sunday School: <strong>{svc.youthSundaySchoolCount}</strong>
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              {svc.workersCount > 0 && (
-                                <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-lg font-medium">
-                                  Workers: <strong>{svc.workersCount}</strong>
-                                </span>
-                              )}
-                              {svc.adultCount > 0 && (
-                                <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-lg font-medium">
-                                  Adults: <strong>{svc.adultCount}</strong>
-                                </span>
-                              )}
-                              {svc.youthCount > 0 && (
-                                <span className="bg-purple-50 text-purple-800 border border-purple-200 px-2 py-0.5 rounded-lg font-medium">
-                                  Youths: <strong>{svc.youthCount}</strong>
-                                </span>
-                              )}
-                            </>
+                          {svc.membersCount > 0 && (
+                            <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-lg font-medium">
+                              Youth Members: <strong>{svc.membersCount}</strong>
+                            </span>
                           )}
 
                           {svc.firstTimersCount > 0 && (
@@ -1016,8 +978,8 @@ export default function UsherHelpDesk() {
                                     {r.person?.firstName} {r.person?.lastName}
                                   </span>
                                   <span className="text-[11px] text-slate-500 font-mono">
-                                    Arrived: <strong className="text-slate-800">{timeFormatted}</strong> &bull;{' '}
-                                    {getCategoryDisplay(r.person, r.subClass)}
+                                    {svc.name} &bull; Arrived: <strong className="text-slate-800">{timeFormatted} WAT</strong> &bull;{' '}
+                                    {getCategoryDisplay(r.person)}
                                   </span>
                                 </div>
 
@@ -1080,7 +1042,6 @@ export default function UsherHelpDesk() {
               {/* Service options list */}
               <div className="space-y-2.5">
                 {todayServicesSummary.map((svc) => {
-                  const isSundaySchool = svc.hasSubClasses || svc.name.toLowerCase().includes('sunday school');
                   return (
                     <div
                       key={svc.id}
@@ -1112,11 +1073,6 @@ export default function UsherHelpDesk() {
                             {svc.totalCount} {svc.totalCount === 1 ? 'attendee' : 'attendees'}
                           </span>
                         </div>
-                        {isSundaySchool && (
-                          <p className="text-[10px] text-purple-700 font-medium">
-                            Includes Youth Sunday School &amp; Adult Sunday School
-                          </p>
-                        )}
                       </div>
 
                       <button
@@ -1281,8 +1237,8 @@ export default function UsherHelpDesk() {
                           {r.person?.firstName} {r.person?.lastName}
                         </span>
                         <span className="text-[11px] text-slate-500 font-mono">
-                          {r.serviceSchedule?.name} • Arrived: <strong className="text-slate-800">{timeFormatted}</strong> •{' '}
-                          {getCategoryDisplay(r.person, r.subClass)}
+                          {r.serviceSchedule?.name} • Arrived: <strong className="text-slate-800">{timeFormatted} WAT</strong> •{' '}
+                          {getCategoryDisplay(r.person)}
                         </span>
                       </div>
 
@@ -1367,14 +1323,14 @@ export default function UsherHelpDesk() {
           </div>
         )}
 
-        {/* MODAL 2: ADD BRAND NEW PERSON (YOUTH WORKER, ADULT WORKER, YOUTH, ADULT) */}
+        {/* MODAL 2: ADD NEW YOUTH (MEMBER OR FIRST-TIMER) */}
         {showAddPersonModal && (
           <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
             <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl animate-in zoom-in-95 duration-150">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                   <UserPlus className="w-4 h-4 text-blue-600" />
-                  <span>Add Person to Church Roster</span>
+                  <span>Add Youth to Roster</span>
                 </h3>
                 <button
                   type="button"
@@ -1412,7 +1368,7 @@ export default function UsherHelpDesk() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-slate-700 font-bold">Phone Number</label>
-                    <span className="text-[10px] text-slate-400 font-normal">Optional (e.g. elderly members)</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Optional (if no phone)</span>
                   </div>
                   <input
                     type="tel"
@@ -1423,20 +1379,10 @@ export default function UsherHelpDesk() {
                   />
                 </div>
 
-                {/* Role / Demographic (Youth Worker, Adult Worker, Youth, Adult) */}
-                <div>
-                  <CustomDropdown
-                    label="Category / Demographic"
-                    value={newRoleType}
-                    onChange={(val) => setNewRoleType(val as any)}
-                    options={roleOptions}
-                  />
-                </div>
-
                 {/* Member vs First-Timer */}
                 <div>
                   <CustomDropdown
-                    label="Church Status"
+                    label="Status"
                     value={newStatus}
                     onChange={(val) => setNewStatus(val as PersonStatus)}
                     options={statusOptions}

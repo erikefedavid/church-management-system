@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   X,
   Clock,
@@ -36,13 +36,7 @@ export default function ManageServicesModal({
   const [services, setServices] = useState<any[]>([]);
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadServices();
-    }
-  }, [isOpen]);
-
-  async function loadServices() {
+  const loadServices = useCallback(async () => {
     setLoading(true);
     const res = await getAllChurchServicesAction();
     if (res.success && res.services) {
@@ -51,7 +45,16 @@ export default function ManageServicesModal({
       onErrorToast(res.error || 'Failed to load services.');
     }
     setLoading(false);
-  }
+  }, [onErrorToast]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        void loadServices();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, loadServices]);
 
   function handleTimeChange(id: string, field: 'startTime' | 'endTime', value: string) {
     setServices((prev) =>

@@ -10,14 +10,28 @@ import {
 import { CheckInMethod, PersonCategory, PersonStatus } from '@prisma/client';
 import { requireStaffSession } from './auth';
 
+function computeYouthCounts(records: any[]) {
+  const firstTimers = records.filter((r) => r.person?.status === 'FIRST_TIMER').length;
+  const members = records.length - firstTimers;
+  return {
+    total: records.length,
+    members,
+    firstTimers,
+  };
+}
+
 /**
  * 1. Fetch church service schedules with intelligent grouping.
- * Separates Today's Schedule (e.g. Workers Meeting, 1st Service, Sunday School, 2nd Service)
- * from Other/Midweek/Special Services (Hour of Mercy, Digging Deep, Faith Clinic, etc.).
- * Also identifies if a service just finished so ushers can download its report immediately!
+ * Separates Today's Schedule from Other/Midweek/Special Services.
+ * Also identifies if a service just finished so ushers can download its report immediately.
  */
 export async function usherGetServicesAction() {
   try {
+    const auth = await requireStaffSession(['USHER', 'ADMIN']);
+    if (!auth.authorized) {
+      return { success: false, error: auth.error || 'Unauthorized staff access.' };
+    }
+
     const church = await prisma.church.findFirst();
     if (!church) {
       return { success: false, error: 'Church not found. Please run seed script.' };
@@ -32,11 +46,9 @@ export async function usherGetServicesAction() {
     const activeRes = await getActiveChurchService(church.id, new Date());
     const ngInfo = getNigerianTimeInfo(new Date());
 
-    // Services occurring on current day of week (accurately filtered for Thanksgiving, Hour of Mercy, etc.)
     const todayServices = activeRes.todayServices;
     const otherServices = services.filter((s) => !todayServices.some((ts) => ts.id === s.id));
 
-    // Check if any service just finished recently today or completed earlier
     const currentMins = (() => {
       const [h, m] = ngInfo.currentTimeString.split(':').map(Number);
       return h * 60 + m;
@@ -86,8 +98,8 @@ export async function usherGetServicesAction() {
 }
 
 /**
- * 2. Get the full member roster sorted alphabetically (A-Z)
- * Joined with today's attendance status, arrival time, and demographic subCategory.
+ * 2. Get the full Youth roster sorted alphabetically (A-Z)
+ * Joined with today's attendance status and arrival time (WAT).
  */
 export async function usherGetRosterAction(serviceScheduleId?: string) {
   try {
@@ -172,10 +184,15 @@ export async function usherGetRosterAction(serviceScheduleId?: string) {
 }
 
 /**
- * 3. Search members by first name, last name, or phone number.
+ * 3. Search Youth members by first name, last name, or phone number.
  */
 export async function usherSearchMembersAction(query: string) {
   try {
+    const auth = await requireStaffSession(['USHER', 'ADMIN']);
+    if (!auth.authorized) {
+      return { success: false, error: auth.error || 'Unauthorized staff access.' };
+    }
+
     const trimmed = query.trim();
     if (!trimmed || trimmed.length < 2) {
       return { success: true, members: [] };
@@ -217,7 +234,6 @@ export async function usherSearchMembersAction(query: string) {
  */
 export async function usherCheckInAction({
   personId,
-  serviceScheduleId,
   subClass,
   usherUserId,
 }: {
@@ -227,6 +243,11 @@ export async function usherCheckInAction({
   usherUserId?: string;
 }) {
   try {
+    const auth = await requireStaffSession(['USHER', 'ADMIN']);
+    if (!auth.authorized) {
+      return { success: false, error: auth.error || 'Unauthorized staff access.' };
+    }
+
     const church = await prisma.church.findFirst();
     if (!church) {
       return { success: false, error: 'Church not found.' };
@@ -242,41 +263,8 @@ export async function usherCheckInAction({
     }
 
     const targetService = activeRes.activeService;
-    let actualServiceId = targetService.id;
-    let actualServiceName = targetService.name;
-    let isEarlyArrival = false;
-
-    // Intelligent check: Workers' Meeting is strictly for workers.
-    // If an usher marks an Adult or Youth (non-worker) during Workers' Meeting,
-    // route their attendance to First Service (or Thanksgiving Service) so Workers' Meeting remains pure!
-    if (targetService.name.toLowerCase().includes('workers')) {
-      const person = await prisma.person.findUnique({ where: { id: personId } });
-      if (person) {
-        const isWorker =
-          person.category === 'WORKER' ||
-          person.subCategory === 'WORKER' ||
-          person.subCategory === 'YOUTH_WORKER' ||
-          person.subCategory === 'ADULT_WORKER';
-
-        if (!isWorker) {
-          const nextService = await prisma.serviceSchedule.findFirst({
-            where: {
-              churchId: church.id,
-              dayOfWeek: targetService.dayOfWeek,
-              startTime: { gt: targetService.startTime },
-            },
-            orderBy: { startTime: 'asc' },
-          });
-
-          if (nextService) {
-            actualServiceId = nextService.id;
-            actualServiceName = nextService.name;
-            isEarlyArrival = true;
-          }
-        }
-      }
-    }
-
+    const actualServiceId = targetService.id;
+    const actualServiceName = targetService.name;
     const today = getNigerianDateMidnight();
 
     // Check if already checked in today for this service
@@ -300,9 +288,7 @@ export async function usherCheckInAction({
         success: true,
         alreadyCheckedIn: true,
         checkInTime: existingTime,
-        message: isEarlyArrival
-          ? `${existing.person.firstName} ${existing.person.lastName} is already checked in as an early arrival for ${actualServiceName} at ${existingTime}!`
-          : `${existing.person.firstName} ${existing.person.lastName} is already marked present for ${actualServiceName} at ${existingTime}!`,
+        message: `${existing.person.firstName} ${existing.person.lastName} is already marked present for ${actualServiceName} at ${existingTime}!`,
       };
     }
 
@@ -333,11 +319,8 @@ export async function usherCheckInAction({
       success: true,
       alreadyCheckedIn: false,
       checkInTime: timeFormatted,
-      isEarlyArrival,
       serviceName: actualServiceName,
-      message: isEarlyArrival
-        ? `Early Arrival: ${record.person.firstName} ${record.person.lastName} logged for ${actualServiceName} (Non-Worker).`
-        : `Marked present at ${timeFormatted}: ${record.person.firstName} ${record.person.lastName} (${record.serviceSchedule.name})`,
+      message: `Marked present at ${timeFormatted}: ${record.person.firstName} ${record.person.lastName} (${record.serviceSchedule.name})`,
     };
   } catch (error) {
     console.error('Error during usher check-in:', error);
@@ -356,6 +339,11 @@ export async function usherUpdatePhoneAction({
   newPhone: string;
 }) {
   try {
+    const auth = await requireStaffSession(['USHER', 'ADMIN']);
+    if (!auth.authorized) {
+      return { success: false, error: auth.error || 'Unauthorized staff access.' };
+    }
+
     const cleanPhone = newPhone.trim().replace(/\s+/g, '');
     if (cleanPhone.length < 7) {
       return { success: false, error: 'Invalid phone number.' };
@@ -383,10 +371,15 @@ export async function usherUpdatePhoneAction({
 }
 
 /**
- * 6. Get today's attendance live list and breakdown counts for the selected service.
+ * 6. Get today's attendance live list and Youth counts for the selected service.
  */
 export async function usherGetTodayAttendanceAction(serviceScheduleId?: string) {
   try {
+    const auth = await requireStaffSession(['USHER', 'ADMIN']);
+    if (!auth.authorized) {
+      return { success: false, error: auth.error || 'Unauthorized staff access.' };
+    }
+
     const church = await prisma.church.findFirst();
     if (!church) {
       return { success: false, error: 'Church not found.' };
@@ -415,61 +408,10 @@ export async function usherGetTodayAttendanceAction(serviceScheduleId?: string) 
       orderBy: { createdAt: 'desc' },
     });
 
-    const totalWorkers = records.filter(
-      (r) =>
-        r.person?.category === 'WORKER' ||
-        r.person?.subCategory === 'WORKER' ||
-        r.person?.subCategory === 'YOUTH_WORKER' ||
-        r.person?.subCategory === 'ADULT_WORKER'
-    ).length;
-
-    const totalYouth = records.filter(
-      (r) =>
-        (r.person?.category === 'YOUTH' || r.person?.subCategory === 'YOUTH') &&
-        r.person?.category !== 'WORKER' &&
-        r.person?.subCategory !== 'WORKER' &&
-        r.person?.subCategory !== 'YOUTH_WORKER'
-    ).length;
-
-    const totalAdults = records.filter(
-      (r) =>
-        (r.person?.category === 'ADULT' || r.person?.subCategory === 'ADULT') &&
-        r.person?.category !== 'WORKER' &&
-        r.person?.subCategory !== 'WORKER' &&
-        r.person?.subCategory !== 'ADULT_WORKER'
-    ).length;
-
-    const youthSundaySchool = records.filter(
-      (r) =>
-        r.subClass === 'YOUTH' ||
-        (r.serviceSchedule?.hasSubClasses &&
-          (r.person?.category === 'YOUTH' || r.person?.subCategory === 'YOUTH' || r.person?.subCategory === 'YOUTH_WORKER'))
-    ).length;
-
-    const adultSundaySchool = records.filter(
-      (r) =>
-        r.subClass === 'ADULT' ||
-        (r.serviceSchedule?.hasSubClasses &&
-          (r.person?.category === 'ADULT' ||
-            r.person?.subCategory === 'ADULT' ||
-            r.person?.category === 'WORKER' ||
-            r.person?.subCategory === 'ADULT_WORKER'))
-    ).length;
-
-    const totalFirstTimers = records.filter((r) => r.person?.status === 'FIRST_TIMER').length;
-
     return {
       success: true,
       count: records.length,
-      counts: {
-        total: records.length,
-        workers: totalWorkers,
-        youth: totalYouth,
-        adults: totalAdults,
-        youthSundaySchool,
-        adultSundaySchool,
-        firstTimers: totalFirstTimers,
-      },
+      counts: computeYouthCounts(records),
       records,
     };
   } catch (error) {
@@ -479,15 +421,13 @@ export async function usherGetTodayAttendanceAction(serviceScheduleId?: string) 
 }
 
 /**
- * 7. Usher registers a person (Existing Member or First-Timer).
- * Demographic roles supported: Worker, Youth, Adult.
+ * 7. Usher registers a Youth Member or First-Timer.
  * Phone number is completely OPTIONAL.
  */
 export async function usherRegisterPersonAction({
   firstName,
   lastName = '',
   phone = '',
-  roleType = 'ADULT',
   status = PersonStatus.MEMBER,
   serviceScheduleId,
   usherUserId,
@@ -495,12 +435,17 @@ export async function usherRegisterPersonAction({
   firstName: string;
   lastName?: string;
   phone?: string;
-  roleType?: 'WORKER' | 'YOUTH' | 'ADULT' | 'YOUTH_WORKER' | 'ADULT_WORKER';
+  roleType?: 'YOUTH';
   status?: PersonStatus;
   serviceScheduleId?: string;
   usherUserId?: string;
 }) {
   try {
+    const auth = await requireStaffSession(['USHER', 'ADMIN']);
+    if (!auth.authorized) {
+      return { success: false, error: auth.error || 'Unauthorized staff access.' };
+    }
+
     const church = await prisma.church.findFirst();
     if (!church) {
       return { success: false, error: 'Church not found.' };
@@ -524,22 +469,6 @@ export async function usherRegisterPersonAction({
       phoneLast4 = 'NONE';
     }
 
-    // Map demographic roleType: Worker covers both youth and adult workers
-    let category: PersonCategory = PersonCategory.ADULT;
-    let subCategory = roleType;
-
-    if (roleType === 'WORKER' || roleType === 'YOUTH_WORKER' || roleType === 'ADULT_WORKER') {
-      category = PersonCategory.WORKER;
-      subCategory = 'WORKER';
-    } else if (roleType === 'YOUTH') {
-      category = PersonCategory.YOUTH;
-      subCategory = 'YOUTH';
-    } else {
-      category = PersonCategory.ADULT;
-      subCategory = 'ADULT';
-    }
-
-    // Create the person
     const person = await prisma.person.create({
       data: {
         churchId: church.id,
@@ -547,8 +476,8 @@ export async function usherRegisterPersonAction({
         lastName: (lastName || '').trim(),
         phone: cleanPhone,
         phoneLast4,
-        category,
-        subCategory,
+        category: PersonCategory.YOUTH,
+        subCategory: 'YOUTH',
         status,
       },
     });
@@ -570,7 +499,7 @@ export async function usherRegisterPersonAction({
       success: true,
       person,
       checkInTime,
-      message: `Successfully registered ${person.firstName} ${person.lastName || ''} into the church database.`,
+      message: `Successfully registered ${person.firstName} ${person.lastName || ''} into the Youth roster.`,
     };
   } catch (error) {
     console.error('Error in usher registering person:', error);
@@ -580,7 +509,6 @@ export async function usherRegisterPersonAction({
 
 /**
  * 8. Query historical attendance records by date and/or service.
- * Allows viewing and downloading past attendance sheets (e.g. past Sundays, Hour of Mercy, etc.)
  */
 export async function usherGetAttendanceHistoryAction({
   targetDate,
@@ -590,6 +518,11 @@ export async function usherGetAttendanceHistoryAction({
   serviceScheduleId?: string;
 }) {
   try {
+    const auth = await requireStaffSession(['USHER', 'ADMIN']);
+    if (!auth.authorized) {
+      return { success: false, error: auth.error || 'Unauthorized staff access.' };
+    }
+
     const church = await prisma.church.findFirst();
     if (!church) {
       return { success: false, error: 'Church not found.' };
@@ -617,62 +550,11 @@ export async function usherGetAttendanceHistoryAction({
       take: 200,
     });
 
-    const totalWorkers = records.filter(
-      (r) =>
-        r.person?.category === 'WORKER' ||
-        r.person?.subCategory === 'WORKER' ||
-        r.person?.subCategory === 'YOUTH_WORKER' ||
-        r.person?.subCategory === 'ADULT_WORKER'
-    ).length;
-
-    const totalYouth = records.filter(
-      (r) =>
-        (r.person?.category === 'YOUTH' || r.person?.subCategory === 'YOUTH') &&
-        r.person?.category !== 'WORKER' &&
-        r.person?.subCategory !== 'WORKER' &&
-        r.person?.subCategory !== 'YOUTH_WORKER'
-    ).length;
-
-    const totalAdults = records.filter(
-      (r) =>
-        (r.person?.category === 'ADULT' || r.person?.subCategory === 'ADULT') &&
-        r.person?.category !== 'WORKER' &&
-        r.person?.subCategory !== 'WORKER' &&
-        r.person?.subCategory !== 'ADULT_WORKER'
-    ).length;
-
-    const youthSundaySchool = records.filter(
-      (r) =>
-        r.subClass === 'YOUTH' ||
-        (r.serviceSchedule?.hasSubClasses &&
-          (r.person?.category === 'YOUTH' || r.person?.subCategory === 'YOUTH' || r.person?.subCategory === 'YOUTH_WORKER'))
-    ).length;
-
-    const adultSundaySchool = records.filter(
-      (r) =>
-        r.subClass === 'ADULT' ||
-        (r.serviceSchedule?.hasSubClasses &&
-          (r.person?.category === 'ADULT' ||
-            r.person?.subCategory === 'ADULT' ||
-            r.person?.category === 'WORKER' ||
-            r.person?.subCategory === 'ADULT_WORKER'))
-    ).length;
-
-    const totalFirstTimers = records.filter((r) => r.person?.status === 'FIRST_TIMER').length;
-
     return {
       success: true,
       records,
       count: records.length,
-      counts: {
-        total: records.length,
-        workers: totalWorkers,
-        youth: totalYouth,
-        adults: totalAdults,
-        youthSundaySchool,
-        adultSundaySchool,
-        firstTimers: totalFirstTimers,
-      },
+      counts: computeYouthCounts(records),
     };
   } catch (error) {
     console.error('Error fetching attendance history:', error);
@@ -688,24 +570,21 @@ export interface TodayServiceReportItem {
   hasSubClasses: boolean;
   status: 'LIVE' | 'CONCLUDED' | 'UPCOMING';
   totalCount: number;
-  workersCount: number;
-  youthCount: number;
-  adultCount: number;
-  adultSundaySchoolCount: number;
-  youthSundaySchoolCount: number;
+  membersCount: number;
   firstTimersCount: number;
   records: any[];
 }
 
 /**
- * 9. Get Today's Completed Services & Live Attendance Breakdown.
- * Returns each service scheduled for today along with its attendee count,
- * subcategory numbers (Workers, Adult Sunday School, Youth Sunday School, First-Timers),
- * and individual attendance records for download/viewing.
- * When midnight passes to the next day, today's list clears automatically and joins History.
+ * 9. Get Today's Completed Services & Live Youth Attendance Breakdown.
  */
 export async function usherGetTodayServicesSummaryAction() {
   try {
+    const auth = await requireStaffSession(['USHER', 'ADMIN']);
+    if (!auth.authorized) {
+      return { success: false, error: auth.error || 'Unauthorized staff access.' };
+    }
+
     const church = await prisma.church.findFirst();
     if (!church) {
       return { success: false, error: 'Church not found.' };
@@ -732,16 +611,13 @@ export async function usherGetTodayServicesSummaryAction() {
     const [curH, curM] = ngInfo.currentTimeString.split(':').map(Number);
     const currentMins = curH * 60 + curM;
 
-    // Services scheduled for today (auto-resolved from activeRes: Thanksgiving Sunday, regular Sunday, Hour of Mercy, etc.)
     const filteredSchedules = activeRes.todayServices;
 
-    // Build report item for each service of today
     const servicesReport: TodayServiceReportItem[] = filteredSchedules.map((svc) => {
       const svcRecords = todayRecords.filter((r) => r.serviceScheduleId === svc.id);
 
-      const [sh, sm] = svc.startTime.split(':').map(Number);
+      const [, ] = svc.startTime.split(':').map(Number);
       const [eh, em] = svc.endTime.split(':').map(Number);
-      const startMins = sh * 60 + sm;
       const endMins = eh * 60 + em;
 
       let status: 'LIVE' | 'CONCLUDED' | 'UPCOMING' = 'UPCOMING';
@@ -751,48 +627,7 @@ export async function usherGetTodayServicesSummaryAction() {
         status = 'CONCLUDED';
       }
 
-      const workersCount = svcRecords.filter(
-        (r) =>
-          r.person?.category === 'WORKER' ||
-          r.person?.subCategory === 'WORKER' ||
-          r.person?.subCategory === 'YOUTH_WORKER' ||
-          r.person?.subCategory === 'ADULT_WORKER'
-      ).length;
-
-      const youthCount = svcRecords.filter(
-        (r) =>
-          (r.person?.category === 'YOUTH' || r.person?.subCategory === 'YOUTH') &&
-          r.person?.category !== 'WORKER' &&
-          r.person?.subCategory !== 'WORKER' &&
-          r.person?.subCategory !== 'YOUTH_WORKER'
-      ).length;
-
-      const adultCount = svcRecords.filter(
-        (r) =>
-          (r.person?.category === 'ADULT' || r.person?.subCategory === 'ADULT') &&
-          r.person?.category !== 'WORKER' &&
-          r.person?.subCategory !== 'WORKER' &&
-          r.person?.subCategory !== 'ADULT_WORKER'
-      ).length;
-
-      const adultSundaySchoolCount = svcRecords.filter(
-        (r) =>
-          r.subClass === 'ADULT' ||
-          r.person?.subCategory === 'ADULT' ||
-          r.person?.subCategory === 'ADULT_WORKER' ||
-          r.person?.category === 'ADULT' ||
-          r.person?.category === 'WORKER'
-      ).length;
-
-      const youthSundaySchoolCount = svcRecords.filter(
-        (r) =>
-          r.subClass === 'YOUTH' ||
-          r.person?.subCategory === 'YOUTH' ||
-          r.person?.subCategory === 'YOUTH_WORKER' ||
-          r.person?.category === 'YOUTH'
-      ).length;
-
-      const firstTimersCount = svcRecords.filter((r) => r.person?.status === 'FIRST_TIMER').length;
+      const counts = computeYouthCounts(svcRecords);
 
       return {
         id: svc.id,
@@ -801,13 +636,9 @@ export async function usherGetTodayServicesSummaryAction() {
         endTime: svc.endTime,
         hasSubClasses: svc.hasSubClasses,
         status,
-        totalCount: svcRecords.length,
-        workersCount,
-        youthCount,
-        adultCount,
-        adultSundaySchoolCount,
-        youthSundaySchoolCount,
-        firstTimersCount,
+        totalCount: counts.total,
+        membersCount: counts.members,
+        firstTimersCount: counts.firstTimers,
         records: svcRecords,
       };
     });
@@ -827,5 +658,3 @@ export async function usherGetTodayServicesSummaryAction() {
     return { success: false, error: 'Failed to fetch today services summary.' };
   }
 }
-
-

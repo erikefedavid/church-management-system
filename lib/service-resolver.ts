@@ -245,6 +245,48 @@ export function getServicePortalSubtitle(
   return `${serviceName} Portal`;
 }
 
+function filterServicesForDate(
+  rawDayServices: ServiceSchedule[],
+  dayOfWeek: DayOfWeek,
+  dayOfMonth: number
+): ServiceSchedule[] {
+  if (dayOfWeek === DayOfWeek.SUNDAY) {
+    if (isFirstSundayOfMonth(dayOfMonth, dayOfWeek)) {
+      const thanksgivingServices = rawDayServices.filter(
+        (s) =>
+          s.name.toLowerCase().includes('thanksgiving') ||
+          s.name.toLowerCase().includes('sunday school (thanksgiving)') ||
+          s.name.toLowerCase().includes('workers')
+      );
+      if (thanksgivingServices.length > 0) {
+        return thanksgivingServices;
+      }
+    } else {
+      const regularServices = rawDayServices.filter(
+        (s) => !s.name.toLowerCase().includes('thanksgiving')
+      );
+      if (regularServices.length > 0) {
+        return regularServices;
+      }
+    }
+    return rawDayServices;
+  }
+
+  if (dayOfWeek === DayOfWeek.FRIDAY && !isFridayBeforeThirdSunday(dayOfMonth, dayOfWeek)) {
+    // Youth Prayer Meeting occurs exclusively on the Friday before the 3rd Sunday
+    return rawDayServices.filter(
+      (s) => !s.name.toLowerCase().includes('youth') && !s.name.toLowerCase().includes('oth')
+    );
+  }
+
+  if (dayOfWeek === DayOfWeek.SATURDAY && !isThirdSaturdayOfMonth(dayOfMonth, dayOfWeek)) {
+    // Hour of Mercy occurs exclusively on the 3rd Saturday of the month
+    return rawDayServices.filter((s) => !s.name.toLowerCase().includes('hour of mercy'));
+  }
+
+  return rawDayServices;
+}
+
 /**
  * Resolves the church service automatically based on real Nigerian time (Africa/Lagos).
  * Applies an automatic overtime grace buffer so extended services never lock members out.
@@ -261,7 +303,6 @@ export async function getActiveChurchService(
 
   const isFirstSunday = isFirstSundayOfMonth(ngTime.dayOfMonth, currentDay);
   const isThirdSaturday = isThirdSaturdayOfMonth(ngTime.dayOfMonth, currentDay);
-  const isOthFriday = isFridayBeforeThirdSunday(ngTime.dayOfMonth, currentDay);
 
   // Fetch all services for this church
   const allChurchServices = await prisma.serviceSchedule.findMany({
@@ -272,45 +313,8 @@ export async function getActiveChurchService(
   // Services for today
   const rawDayServices = allChurchServices.filter((s) => s.dayOfWeek === currentDay);
 
-  // Filter today's services according to Thanksgiving vs Regular Sunday
-  let todayServices = rawDayServices;
-
-  if (currentDay === DayOfWeek.SUNDAY) {
-    if (isFirstSunday) {
-      const thanksgivingServices = rawDayServices.filter(
-        (s) =>
-          s.name.toLowerCase().includes('thanksgiving') ||
-          s.name.toLowerCase().includes('sunday school (thanksgiving)') ||
-          s.name.toLowerCase().includes('workers')
-      );
-      if (thanksgivingServices.length > 0) {
-        todayServices = thanksgivingServices;
-      }
-    } else {
-      const regularServices = rawDayServices.filter(
-        (s) => !s.name.toLowerCase().includes('thanksgiving')
-      );
-      if (regularServices.length > 0) {
-        todayServices = regularServices;
-      }
-    }
-  }
-
-  if (currentDay === DayOfWeek.FRIDAY) {
-    if (!isOthFriday) {
-      // Youth Prayer Meeting occurs exclusively on the Friday before the 3rd Sunday
-      todayServices = rawDayServices.filter(
-        (s) => !s.name.toLowerCase().includes('youth') && !s.name.toLowerCase().includes('oth')
-      );
-    }
-  }
-
-  if (currentDay === DayOfWeek.SATURDAY) {
-    if (!isThirdSaturday) {
-      // Hour of Mercy occurs exclusively on the 3rd Saturday of the month
-      todayServices = rawDayServices.filter((s) => !s.name.toLowerCase().includes('hour of mercy'));
-    }
-  }
+  // Filter today's services according to Thanksgiving vs Regular Sunday and monthly rules
+  const todayServices = filterServicesForDate(rawDayServices, currentDay, ngTime.dayOfMonth);
 
   // 1. Check if current Nigerian time falls strictly within a scheduled service window + grace buffer
   const matchingServices: ServiceSchedule[] = [];
@@ -333,7 +337,7 @@ export async function getActiveChurchService(
     }
   }
 
-  let isLiveNow = activeService !== null;
+  const isLiveNow = activeService !== null;
   let isSimulatedFallback = false;
 
   // 2. Compute Next Upcoming Service
@@ -364,7 +368,13 @@ export async function getActiveChurchService(
     const currentDayIdx = dayOrder.indexOf(currentDay);
     for (let i = 1; i <= 7; i++) {
       const checkDay = dayOrder[(currentDayIdx + i) % 7];
-      const svcs = allChurchServices.filter((s) => s.dayOfWeek === checkDay);
+      const futureDate = new Date(Date.UTC(ngTime.year, ngTime.month - 1, ngTime.dayOfMonth + i));
+      const futureDayOfMonth = futureDate.getUTCDate();
+      const svcs = filterServicesForDate(
+        allChurchServices.filter((s) => s.dayOfWeek === checkDay),
+        checkDay,
+        futureDayOfMonth
+      );
       if (svcs.length > 0) {
         const nextSvc = svcs[0];
         const dayLabel = i === 1 ? 'Tomorrow' : nextSvc.dayOfWeek;

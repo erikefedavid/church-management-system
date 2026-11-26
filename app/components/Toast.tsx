@@ -24,26 +24,26 @@ export default function Toast({ type, message, title, onClose, duration = 3500 }
   const styleConfig = {
     success: {
       bg: 'bg-emerald-50',
-      border: 'border-emerald-200',
-      text: 'text-emerald-900',
-      desc: 'text-emerald-700',
-      icon: <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />,
+      border: 'border-emerald-300',
+      text: 'text-emerald-950',
+      desc: 'text-emerald-900',
+      icon: <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />,
       titleDefault: 'Success',
     },
     error: {
       bg: 'bg-rose-50',
-      border: 'border-rose-200',
-      text: 'text-rose-900',
-      desc: 'text-rose-700',
-      icon: <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />,
+      border: 'border-rose-300',
+      text: 'text-rose-950',
+      desc: 'text-rose-900',
+      icon: <AlertCircle className="w-5 h-5 text-rose-700 shrink-0 mt-0.5" />,
       titleDefault: 'Action Required',
     },
     info: {
       bg: 'bg-blue-50',
-      border: 'border-blue-200',
-      text: 'text-blue-900',
-      desc: 'text-blue-700',
-      icon: <Info className="w-5 h-5 text-blue-600 shrink-0" />,
+      border: 'border-blue-300',
+      text: 'text-blue-950',
+      desc: 'text-blue-900',
+      icon: <Info className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />,
       titleDefault: 'Information',
     },
   }[type];
@@ -65,7 +65,7 @@ export default function Toast({ type, message, title, onClose, duration = 3500 }
         <button
           type="button"
           onClick={onClose}
-          className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-black/5 cursor-pointer"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2 -mt-2 p-2 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-black/5 transition-colors cursor-pointer"
           aria-label="Close notification"
         >
           <X className="w-4 h-4" />

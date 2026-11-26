@@ -131,7 +131,10 @@ model Person {
   phoneLast4      String         // "5678" (for instant 4-digit search)
   
   dateOfBirth     DateTime?      // Optional for now (ready for future birthday system)
-  category        PersonCategory @default(ADULT)
+  birthDay        Int?           // 1 - 31 (for fast calendar queries)
+  birthMonth      Int?           // 1 - 12 (for fast calendar queries)
+  photoUrl        String?        // Profile / avatar picture for birthday flyer design
+  category        PersonCategory @default(YOUTH)
   subCategory     String?        // "YOUTH_WORKER" | "ADULT_WORKER" | "YOUTH" | "ADULT" | "CHILD"
   status          PersonStatus   @default(MEMBER)
   
@@ -145,10 +148,13 @@ model Person {
 
   attendanceRecords AttendanceRecord[]
   followUpResults   FollowUpResult[]
+  followUpTasks     FollowUpTask[]
+  birthdayLogs      BirthdayReminderLog[]
 
   // Indexes make search queries lightning fast
   @@index([churchId, phoneLast4])
   @@index([churchId, groupId])
+  @@index([churchId, birthMonth, birthDay])
 }
 
 // -------------------------------------------------------------
@@ -219,5 +225,45 @@ model FollowUpResult {
 
   createdAt  DateTime @default(now())
 
+  @@index([personId])
+}
+
+// -------------------------------------------------------------
+// Birthday Reminder Logs (T-1 Graphics alerts & Day-of celebrations)
+// -------------------------------------------------------------
+model BirthdayReminderLog {
+  id         String   @id @default(cuid())
+  personId   String
+  person     Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  year       Int
+  type       String   // "GRAPHICS_T_MINUS_1" | "DAY_OF_CELEBRATION"
+  status     String   @default("SENT") // "SENT" | "ACKNOWLEDGED" | "FLYER_READY"
+  flyerUrl   String?  // Optional uploaded flyer link
+  sentAt     DateTime @default(now())
+
+  @@unique([personId, year, type])
+  @@index([personId])
+}
+
+// -------------------------------------------------------------
+// AI-Assisted Zero-Forgotten-Member Follow-up Tasks
+// -------------------------------------------------------------
+model FollowUpTask {
+  id          String    @id @default(cuid())
+  personId    String
+  person      Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  reason      String    // "FIRST_TIMER" | "MISSED_1_WEEK" | "MISSED_2_WEEKS" | "DORMANT_CRITICAL"
+  status      String    @default("PENDING") // "PENDING" | "CONTACTED" | "ESCALATED"
+  assignedTo  String?   // Name of assigned youth worker / volunteer
+  aiDraftNote String?   // AI-generated contextual check-in message starter
+  escalatedTo String?   // "YOUTH_PASTOR"
+  dueDate     DateTime
+  contactedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, dueDate])
   @@index([personId])
 }

@@ -96,7 +96,9 @@ export default function AttendanceProofPage() {
         const stored = localStorage.getItem('rccg_completed_checkin');
         if (stored) {
           currentSlip = JSON.parse(stored);
-          setSlip(currentSlip);
+          queueMicrotask(() => {
+            setSlip(currentSlip);
+          });
         }
       } catch (e) {
         console.warn('Could not read from localStorage', e);
@@ -244,10 +246,10 @@ export default function AttendanceProofPage() {
             {/* Member Name */}
             <div className="text-center space-y-1.5 pt-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">
-                Worshipper Name
+                Member Name
               </span>
               <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">
-                {slip?.name || 'Faithful Worshipper'}
+                {slip?.name || 'Youth Member'}
               </h3>
               <div className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-900 font-bold text-xs px-3 py-1 rounded-full">
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />

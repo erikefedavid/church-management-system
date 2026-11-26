@@ -71,7 +71,7 @@ export default function EntranceSplash({
       {/* Bottom Minimal Smooth Loader */}
       <div className="pb-8 flex flex-col items-center space-y-2">
         <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <span className="text-[11px] font-medium text-slate-400">
+        <span className="text-[11px] font-medium text-slate-700">
           Verifying sanctuary...
         </span>
       </div>

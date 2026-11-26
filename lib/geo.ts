@@ -136,3 +136,9 @@ export function isWithinChurchGeofence(
     suspiciousMockIndicator: isSuspicious,
   };
 }
+
+/**
+ * Alias export conforming to Milestone 2 attendance and test specifications.
+ */
+export const isWithinGeofence = isWithinChurchGeofence;
+

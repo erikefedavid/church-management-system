@@ -1,600 +1,571 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { prisma } from '@/lib/prisma';
+import {
+  detectAbsenteeMembers,
+  AbsenceRadarScanResult,
+  RadarClassifiedMember,
+} from '@/lib/absence-radar';
+import {
+  syncFollowUpTasks,
+  executeAutoEscalationScan,
+  completeFollowUpTask,
+  MandatedOutcome,
+  getWeekNumber,
+} from '@/lib/follow-up-engine';
+import { dispatchDirectMessage, MessageChannel } from '@/lib/direct-dispatch';
+import { polishDraftWithAi } from '@/lib/ai-assistant';
+import { getNigerianTimeInfo } from '@/lib/service-resolver';
+import { requireStaffSession } from './auth';
 
-export type FollowUpOutcome =
-  | 'DOING_WELL'
-  | 'NEEDS_PRAYER'
-  | 'SICK'
-  | 'WANTS_VISIT'
-  | 'TRAVELLED'
-  | 'UNREACHABLE';
+export type { MandatedOutcome };
 
-export type FollowUpListType = 'FIRST_TIMERS' | 'ABSENT' | 'GROUP' | 'ALERTS';
+export type RadarFilterType =
+  | 'MISSED_1_WEEK'
+  | 'MISSED_2_WEEKS'
+  | 'FIRST_TIMER_72H'
+  | 'ESCALATED'
+  | 'ALL';
 
-export interface FollowUpPerson {
-  id: string;
+export interface RadarMetrics {
+  missed1WeekCount: number;
+  missed2WeeksCount: number;
+  firstTimers72hCount: number;
+  escalatedCount: number;
+  totalActiveMembers: number;
+  lastUpdatedWat: string;
+}
+
+export interface FollowUpMemberQueueItem {
+  taskId?: string;
+  personId: string;
   firstName: string;
   lastName: string;
+  fullName: string;
   phone: string;
+  formattedPhone: string;
   phoneLast4: string;
   category: string;
   subCategory: string | null;
   status: 'MEMBER' | 'FIRST_TIMER' | 'EVANGELISM';
-  groupName: string | null;
-  groupId: string | null;
-  lastAttendanceFormatted: string | null;
+  reason: 'FIRST_TIMER' | 'MISSED_1_WEEK' | 'MISSED_2_WEEKS' | 'DORMANT_CRITICAL';
+  taskStatus?: 'PENDING' | 'CONTACTED' | 'ESCALATED';
+  assignedTo?: string | null;
+  escalatedTo?: string | null;
+  dueDate?: string | null;
+  isOverdue: boolean;
+  daysAbsent: number;
+  lastAttendanceFormatted: string;
   lastAttendanceDate: string | null;
+  deterministicDraft: string;
+  waMeUrl: string;
   recentNotes: {
     id: string;
     callerName: string;
     outcome: string;
     note: string | null;
-    createdAt: string;
-    weekNumber: number;
-  }[];
-}
-
-export interface FollowUpOverviewData {
-  success: boolean;
-  churchName: string;
-  firstTimersCount: number;
-  absentCount: number;
-  activeGroupsCount: number;
-  alertsCount: number;
-  groups: { id: string; name: string; memberCount: number }[];
-  recentCalls: {
-    id: string;
-    memberName: string;
-    callerName: string;
-    outcome: string;
-    note: string | null;
     date: string;
   }[];
+}
+
+// ---------------------------------------------------------------------------
+// 1. Fetch Radar Dashboard Metrics & Member Queue
+// ---------------------------------------------------------------------------
+export async function getFollowUpRadarDashboardAction(filters: {
+  filter?: RadarFilterType;
+  searchQuery?: string;
+} = {}): Promise<{
+  success: boolean;
+  metrics: RadarMetrics;
+  members: FollowUpMemberQueueItem[];
   error?: string;
-}
-
-/**
- * Helper: Calculate current calendar week number (1 - 52)
- */
-function getWeekNumber(date: Date = new Date()): number {
-  const target = new Date(date.valueOf());
-  const dayNr = (date.getDay() + 6) % 7;
-  target.setDate(target.getDate() - dayNr + 3);
-  const firstThursday = target.valueOf();
-  target.setMonth(0, 1);
-  if (target.getDay() !== 4) {
-    target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
-  }
-  return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
-}
-
-/**
- * 1. Fetch Follow-up Overview KPIs & Calling Groups
- */
-export async function getFollowUpOverviewAction(): Promise<FollowUpOverviewData> {
+}> {
   try {
-    const church = await prisma.church.findFirst({
-      include: {
-        groups: {
-          include: {
-            _count: {
-              select: { people: true },
-            },
-          },
-        },
-      },
-    });
-
-    if (!church) {
+    const auth = await requireStaffSession(['FOLLOWUP', 'ADMIN']);
+    if (!auth.authorized) {
       return {
         success: false,
-        churchName: '',
-        firstTimersCount: 0,
-        absentCount: 0,
-        activeGroupsCount: 0,
-        alertsCount: 0,
-        groups: [],
-        recentCalls: [],
-        error: 'Church profile not found in database.',
+        metrics: {
+          missed1WeekCount: 0,
+          missed2WeeksCount: 0,
+          firstTimers72hCount: 0,
+          escalatedCount: 0,
+          totalActiveMembers: 0,
+          lastUpdatedWat: '',
+        },
+        members: [],
+        error: auth.error || 'Unauthorized staff access.',
       };
     }
 
-    // Auto-create initial default groups if church has none
-    let groupsList = church.groups;
-    if (groupsList.length === 0) {
-      const defaultGroupNames = ['Group A (Daniel)', 'Group B (Esther)', 'Group C (David)'];
-      await prisma.$transaction(
-        defaultGroupNames.map((name) =>
-          prisma.group.create({
-            data: {
-              churchId: church.id,
-              name,
-            },
-          })
-        )
+    const radarResult: AbsenceRadarScanResult = await detectAbsenteeMembers();
+    const activeFilter = filters.filter || 'ALL';
+    const query = (filters.searchQuery || '').trim().toLowerCase();
+
+    // 1. Determine members based on filter
+    let rawMembers: RadarClassifiedMember[] = [];
+    switch (activeFilter) {
+      case 'MISSED_1_WEEK':
+        rawMembers = radarResult.missed1Week;
+        break;
+      case 'MISSED_2_WEEKS':
+        rawMembers = radarResult.missed2Weeks;
+        break;
+      case 'FIRST_TIMER_72H':
+        rawMembers = radarResult.firstTimers72h;
+        break;
+      case 'ESCALATED':
+        rawMembers = radarResult.escalatedToPastor;
+        break;
+      case 'ALL':
+      default: {
+        const seen = new Set<string>();
+        const combined: RadarClassifiedMember[] = [];
+        for (const m of [
+          ...radarResult.escalatedToPastor,
+          ...radarResult.firstTimers72h,
+          ...radarResult.missed1Week,
+          ...radarResult.missed2Weeks,
+        ]) {
+          if (m.reason !== 'DORMANT_CRITICAL' && !seen.has(m.personId)) {
+            seen.add(m.personId);
+            combined.push(m);
+          }
+        }
+        rawMembers = combined;
+        break;
+      }
+    }
+
+    // 2. Filter out members without reachable phone numbers
+    rawMembers = rawMembers.filter((m) => {
+      const clean = (m.phone || '').replace(/\D/g, '');
+      return clean.length >= 7 && m.phone !== 'N/A' && m.phone !== '0000';
+    });
+
+    // 3. Apply search filter
+    if (query) {
+      rawMembers = rawMembers.filter(
+        (m) =>
+          m.firstName.toLowerCase().includes(query) ||
+          m.lastName.toLowerCase().includes(query) ||
+          m.fullName.toLowerCase().includes(query) ||
+          m.phone.includes(query) ||
+          m.phoneLast4.includes(query)
       );
-
-      const refreshedChurch = await prisma.church.findUnique({
-        where: { id: church.id },
-        include: {
-          groups: {
-            include: {
-              _count: {
-                select: { people: true },
-              },
-            },
-          },
-        },
-      });
-      groupsList = refreshedChurch?.groups || [];
     }
 
-    // 1. Total First-Timers
-    const firstTimersCount = await prisma.person.count({
+    // 3. Fetch recent call notes for all returned members in 1 batch query
+    const personIds = rawMembers.map((m) => m.personId);
+    const recentResults = await prisma.followUpResult.findMany({
       where: {
-        churchId: church.id,
-        status: 'FIRST_TIMER',
-        isActive: true,
+        personId: { in: personIds },
       },
-    });
-
-    // 2. Identify the most recent Sunday attendance session to calculate Absent Members
-    const latestSundayRecord = await prisma.attendanceRecord.findFirst({
-      where: {
-        churchId: church.id,
-      },
-      orderBy: { date: 'desc' },
-      select: { date: true },
-    });
-
-    let absentCount = 0;
-    if (latestSundayRecord) {
-      // Find all active members who did NOT attend that Sunday
-      const attendeesOnSunday = await prisma.attendanceRecord.findMany({
-        where: {
-          churchId: church.id,
-          date: latestSundayRecord.date,
-        },
-        select: { personId: true },
-      });
-      const attendeeIds = new Set(attendeesOnSunday.map((a) => a.personId));
-
-      const totalMembers = await prisma.person.count({
-        where: {
-          churchId: church.id,
-          status: 'MEMBER',
-          isActive: true,
-          id: { notIn: Array.from(attendeeIds) },
-        },
-      });
-      absentCount = totalMembers;
-    } else {
-      // If zero attendance records exist yet, count inactive or unrecorded members
-      absentCount = await prisma.person.count({
-        where: { churchId: church.id, status: 'MEMBER' },
-      });
-    }
-
-    // 3. Pastoral Care Alerts count (Needs Prayer, Sick, Wants Visit in the last 14 days)
-    const fourteenDaysAgo = new Date();
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-
-    const alertsCount = await prisma.followUpResult.count({
-      where: {
-        person: { churchId: church.id },
-        createdAt: { gte: fourteenDaysAgo },
-        outcome: { in: ['NEEDS_PRAYER', 'SICK', 'WANTS_VISIT'] },
-      },
-    });
-
-    // 4. Recent Call Logs
-    const recentLogs = await prisma.followUpResult.findMany({
-      where: { person: { churchId: church.id } },
       orderBy: { createdAt: 'desc' },
-      take: 10,
-      include: {
-        person: {
-          select: { firstName: true, lastName: true },
-        },
+      take: 100,
+      select: {
+        id: true,
+        personId: true,
+        callerName: true,
+        outcome: true,
+        note: true,
+        createdAt: true,
       },
     });
+
+    const notesByPerson = new Map<string, typeof recentResults>();
+    for (const res of recentResults) {
+      const existing = notesByPerson.get(res.personId) || [];
+      if (existing.length < 3) {
+        existing.push(res);
+        notesByPerson.set(res.personId, existing);
+      }
+    }
+
+    const now = Date.now();
+    const formattedQueue: FollowUpMemberQueueItem[] = rawMembers.map((m) => {
+      const isOverdue = m.dueDate ? m.dueDate.getTime() < now : false;
+      const notes = (notesByPerson.get(m.personId) || []).map((n) => ({
+        id: n.id,
+        callerName: n.callerName,
+        outcome: n.outcome,
+        note: n.note,
+        date: n.createdAt.toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+        }),
+      }));
+
+      return {
+        taskId: m.existingTaskId,
+        personId: m.personId,
+        firstName: m.firstName,
+        lastName: m.lastName,
+        fullName: m.fullName,
+        phone: m.phone,
+        formattedPhone: m.formattedPhone,
+        phoneLast4: m.phoneLast4,
+        category: m.category,
+        subCategory: m.subCategory,
+        status: m.status,
+        reason: m.reason,
+        taskStatus: m.taskStatus,
+        assignedTo: m.subCategory ? `${m.subCategory} Volunteer` : 'Youth Volunteer',
+        escalatedTo: m.escalatedTo || null,
+        dueDate: m.dueDate ? m.dueDate.toISOString() : null,
+        isOverdue: isOverdue || m.isEscalated,
+        daysAbsent: m.daysAbsent,
+        lastAttendanceFormatted: m.lastAttendedFormatted,
+        lastAttendanceDate: m.lastAttendedDate ? m.lastAttendedDate.toISOString() : null,
+        deterministicDraft: m.aiDraftNote,
+        waMeUrl: m.waMeUrl,
+        recentNotes: notes,
+      };
+    });
+
+    const ngInfo = getNigerianTimeInfo();
+    const lastUpdatedWat = `${ngInfo.formatted12Hour} WAT`;
 
     return {
       success: true,
-      churchName: church.name,
-      firstTimersCount,
-      absentCount,
-      activeGroupsCount: groupsList.length,
-      alertsCount,
-      groups: groupsList.map((g) => ({
-        id: g.id,
-        name: g.name,
-        memberCount: g._count.people,
-      })),
-      recentCalls: recentLogs.map((log) => ({
-        id: log.id,
-        memberName: `${log.person.firstName} ${log.person.lastName}`,
-        callerName: log.callerName,
-        outcome: log.outcome,
-        note: log.note,
-        date: log.createdAt.toLocaleDateString('en-GB', {
-          day: 'numeric',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-      })),
+      metrics: {
+        missed1WeekCount: radarResult.stats.missed1WeekCount,
+        missed2WeeksCount: radarResult.stats.missed2WeeksCount,
+        firstTimers72hCount: radarResult.stats.firstTimers72hCount,
+        escalatedCount: radarResult.stats.escalatedCount,
+        totalActiveMembers: radarResult.totalActiveMembers,
+        lastUpdatedWat,
+      },
+      members: formattedQueue,
     };
   } catch (error) {
-    console.error('Error fetching follow-up overview:', error);
+    console.error('Error fetching follow-up radar dashboard:', error);
     return {
       success: false,
-      churchName: '',
-      firstTimersCount: 0,
-      absentCount: 0,
-      activeGroupsCount: 0,
-      alertsCount: 0,
-      groups: [],
-      recentCalls: [],
-      error: 'Failed to load follow-up metrics.',
-    };
-  }
-}
-
-/**
- * 2. Fetch Members Queue based on filter (First-Timers, Absent, Calling Group, Alerts)
- */
-export async function getMembersForFollowUpAction({
-  listType,
-  groupId,
-  searchQuery,
-}: {
-  listType: FollowUpListType;
-  groupId?: string;
-  searchQuery?: string;
-}): Promise<{ success: boolean; members: FollowUpPerson[]; error?: string }> {
-  try {
-    const church = await prisma.church.findFirst();
-    if (!church) {
-      return { success: false, members: [], error: 'Church not found.' };
-    }
-
-    const whereClause: any = {
-      churchId: church.id,
-      isActive: true,
-    };
-
-    if (searchQuery && searchQuery.trim()) {
-      const q = searchQuery.trim();
-      whereClause.OR = [
-        { firstName: { contains: q, mode: 'insensitive' } },
-        { lastName: { contains: q, mode: 'insensitive' } },
-        { phone: { contains: q } },
-        { phoneLast4: { contains: q } },
-      ];
-    }
-
-    // Filter by requested list type
-    if (listType === 'FIRST_TIMERS') {
-      whereClause.status = 'FIRST_TIMER';
-    } else if (listType === 'GROUP') {
-      if (groupId) {
-        whereClause.groupId = groupId;
-      }
-    } else if (listType === 'ABSENT') {
-      whereClause.status = 'MEMBER';
-      // Find latest attendance date
-      const latestSundayRecord = await prisma.attendanceRecord.findFirst({
-        where: { churchId: church.id },
-        orderBy: { date: 'desc' },
-        select: { date: true },
-      });
-      if (latestSundayRecord) {
-        const attendedIds = await prisma.attendanceRecord.findMany({
-          where: {
-            churchId: church.id,
-            date: latestSundayRecord.date,
-          },
-          select: { personId: true },
-        });
-        whereClause.id = { notIn: attendedIds.map((a) => a.personId) };
-      }
-    } else if (listType === 'ALERTS') {
-      const fourteenDaysAgo = new Date();
-      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-
-      const alertPersonIds = await prisma.followUpResult.findMany({
-        where: {
-          createdAt: { gte: fourteenDaysAgo },
-          outcome: { in: ['NEEDS_PRAYER', 'SICK', 'WANTS_VISIT'] },
-        },
-        select: { personId: true },
-        distinct: ['personId'],
-      });
-
-      whereClause.id = { in: alertPersonIds.map((p) => p.personId) };
-    }
-
-    const people = await prisma.person.findMany({
-      where: whereClause,
-      include: {
-        group: { select: { name: true } },
-        attendanceRecords: {
-          orderBy: { date: 'desc' },
-          take: 1,
-          select: { date: true },
-        },
-        followUpResults: {
-          orderBy: { createdAt: 'desc' },
-          take: 3,
-          select: {
-            id: true,
-            callerName: true,
-            outcome: true,
-            note: true,
-            createdAt: true,
-            weekNumber: true,
-          },
-        },
+      metrics: {
+        missed1WeekCount: 0,
+        missed2WeeksCount: 0,
+        firstTimers72hCount: 0,
+        escalatedCount: 0,
+        totalActiveMembers: 0,
+        lastUpdatedWat: '',
       },
-      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
-      take: 60,
-    });
-
-    const formatted: FollowUpPerson[] = people.map((p) => {
-      const lastAtt = p.attendanceRecords[0]?.date;
-      return {
-        id: p.id,
-        firstName: p.firstName,
-        lastName: p.lastName,
-        phone: p.phone,
-        phoneLast4: p.phoneLast4,
-        category: p.category,
-        subCategory: p.subCategory,
-        status: p.status,
-        groupId: p.groupId,
-        groupName: p.group?.name || null,
-        lastAttendanceDate: lastAtt ? lastAtt.toISOString() : null,
-        lastAttendanceFormatted: lastAtt
-          ? lastAtt.toLocaleDateString('en-GB', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })
-          : 'Never recorded',
-        recentNotes: p.followUpResults.map((r) => ({
-          id: r.id,
-          callerName: r.callerName,
-          outcome: r.outcome,
-          note: r.note,
-          createdAt: r.createdAt.toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-          }),
-          weekNumber: r.weekNumber,
-        })),
-      };
-    });
-
-    return { success: true, members: formatted };
-  } catch (error) {
-    console.error('Error fetching follow-up queue:', error);
-    return { success: false, members: [], error: 'Failed to retrieve members list.' };
+      members: [],
+      error: error instanceof Error ? error.message : 'Failed to retrieve radar dashboard',
+    };
   }
 }
 
-/**
- * 3. Log Volunteer Follow-up Call Result
- */
-export async function logFollowUpResultAction({
-  personId,
-  callerName,
-  outcome,
-  note,
-}: {
+// ---------------------------------------------------------------------------
+// 2. Direct Gateway Dispatch via SMS / WhatsApp API
+// ---------------------------------------------------------------------------
+export async function dispatchDirectMessageAction(params: {
+  taskId?: string;
+  personId: string;
+  messageText: string;
+  channel?: MessageChannel;
+}): Promise<{
+  success: boolean;
+  status: 'DELIVERED' | 'QUEUED' | 'FALLBACK_GENERATED' | 'FAILED';
+  provider: string;
+  waMeUrl: string;
+  error?: string;
+}> {
+  try {
+    const auth = await requireStaffSession(['FOLLOWUP', 'ADMIN']);
+    if (!auth.authorized) {
+      return {
+        success: false,
+        status: 'FAILED',
+        provider: 'NONE',
+        waMeUrl: '',
+        error: auth.error || 'Unauthorized staff access.',
+      };
+    }
+
+    const person = await prisma.person.findUnique({
+      where: { id: params.personId },
+      select: { id: true, firstName: true, lastName: true, phone: true },
+    });
+
+    if (!person) {
+      return {
+        success: false,
+        status: 'FAILED',
+        provider: 'NONE',
+        waMeUrl: '',
+        error: 'Recipient member record not found.',
+      };
+    }
+
+    const dispatchResult = await dispatchDirectMessage({
+      to: person.phone,
+      body: params.messageText,
+      channel: params.channel || 'AUTO',
+      recipientName: `${person.firstName} ${person.lastName}`,
+    });
+
+    // If dispatch succeeded or generated 1-click fallback, auto-resolve task if taskId provided
+    if (params.taskId && (dispatchResult.status === 'DELIVERED' || dispatchResult.status === 'QUEUED')) {
+      try {
+        await completeFollowUpTask({
+          taskId: params.taskId,
+          personId: person.id,
+          callerName: `Automated Dispatch (${dispatchResult.provider})`,
+          outcome: 'Contacted (WhatsApp)',
+          note: `Message dispatched via ${dispatchResult.provider}. Status: ${dispatchResult.status}`,
+        });
+        revalidatePath('/followup');
+      } catch (taskErr) {
+        console.warn('Could not auto-complete task after direct dispatch:', taskErr);
+      }
+    }
+
+    return {
+      success: dispatchResult.success,
+      status: dispatchResult.status,
+      provider: dispatchResult.provider,
+      waMeUrl: dispatchResult.waMeUrl,
+      error: dispatchResult.error,
+    };
+  } catch (error) {
+    console.error('Error dispatching direct message:', error);
+    return {
+      success: false,
+      status: 'FAILED',
+      provider: 'NONE',
+      waMeUrl: '',
+      error: error instanceof Error ? error.message : 'Dispatch failed',
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 3. On-Demand AI Polish with 7-Day Deduplication Cache
+// ---------------------------------------------------------------------------
+export async function polishFollowUpDraftAction(params: {
+  personId: string;
+  baseDraft: string;
+  tone?: string;
+}): Promise<{
+  success: boolean;
+  text: string;
+  cached: boolean;
+  tokensConsumed: number;
+  error?: string;
+}> {
+  try {
+    const auth = await requireStaffSession(['FOLLOWUP', 'ADMIN']);
+    if (!auth.authorized) {
+      return {
+        success: false,
+        text: params.baseDraft,
+        cached: false,
+        tokensConsumed: 0,
+        error: auth.error || 'Unauthorized staff access.',
+      };
+    }
+
+    const person = await prisma.person.findUnique({
+      where: { id: params.personId },
+      select: {
+        firstName: true,
+        lastName: true,
+        phone: true,
+        category: true,
+        subCategory: true,
+      },
+    });
+
+    if (!person) {
+      return {
+        success: false,
+        text: params.baseDraft,
+        cached: false,
+        tokensConsumed: 0,
+        error: 'Member not found',
+      };
+    }
+
+    const polishResult = await polishDraftWithAi(
+      params.baseDraft,
+      {
+        firstName: person.firstName,
+        lastName: person.lastName,
+        phone: person.phone,
+        category: person.category,
+        subCategory: person.subCategory,
+      },
+      params.tone || 'CASUAL_YOUTH'
+    );
+
+    return {
+      success: true,
+      text: polishResult.text,
+      cached: polishResult.cached,
+      tokensConsumed: polishResult.tokensConsumed,
+    };
+  } catch (error) {
+    console.error('Error in polishFollowUpDraftAction:', error);
+    return {
+      success: false,
+      text: params.baseDraft,
+      cached: false,
+      tokensConsumed: 0,
+      error: error instanceof Error ? error.message : 'AI polish failed',
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 4. Complete Follow-Up Task & Log Outcome
+// ---------------------------------------------------------------------------
+export async function completeFollowUpTaskAction(params: {
+  taskId?: string;
   personId: string;
   callerName: string;
-  outcome: FollowUpOutcome;
+  outcome: MandatedOutcome;
   note?: string;
-}) {
+}): Promise<{
+  success: boolean;
+  message: string;
+  error?: string;
+}> {
   try {
-    if (!personId) {
-      return { success: false, error: 'Member identifier is required.' };
+    const auth = await requireStaffSession(['FOLLOWUP', 'ADMIN']);
+    if (!auth.authorized) {
+      return { success: false, message: '', error: auth.error || 'Unauthorized staff access.' };
     }
 
-    const cleanCaller = callerName?.trim() || 'Volunteer Caller';
+    if (!params.personId) {
+      return { success: false, message: '', error: 'Member identifier is required.' };
+    }
+
+    const cleanCaller = params.callerName?.trim() || 'Youth President';
     const weekNumber = getWeekNumber(new Date());
 
-    const result = await prisma.followUpResult.create({
-      data: {
-        personId,
+    if (params.taskId) {
+      // Complete existing FollowUpTask and create FollowUpResult
+      await completeFollowUpTask({
+        taskId: params.taskId,
+        personId: params.personId,
         callerName: cleanCaller,
-        weekNumber,
-        outcome,
-        note: note?.trim() || null,
-      },
-      include: {
-        person: {
-          select: { firstName: true, lastName: true },
+        outcome: params.outcome,
+        note: params.note,
+      });
+    } else {
+      // Find open task if one exists
+      const existingTask = await prisma.followUpTask.findFirst({
+        where: {
+          personId: params.personId,
+          status: { in: ['PENDING', 'ESCALATED'] },
         },
-      },
-    });
+      });
+
+      if (existingTask) {
+        await completeFollowUpTask({
+          taskId: existingTask.id,
+          personId: params.personId,
+          callerName: cleanCaller,
+          outcome: params.outcome,
+          note: params.note,
+        });
+      } else {
+        // Just log the result directly
+        await prisma.followUpResult.create({
+          data: {
+            personId: params.personId,
+            callerName: cleanCaller,
+            weekNumber,
+            outcome: params.outcome,
+            note: params.note?.trim() || null,
+          },
+        });
+      }
+    }
 
     revalidatePath('/followup');
     revalidatePath('/admin');
 
     return {
       success: true,
-      message: `Follow-up call for ${result.person.firstName} logged successfully!`,
-      resultId: result.id,
+      message: `Follow-up outcome "${params.outcome}" recorded successfully.`,
     };
   } catch (error) {
-    console.error('Error logging follow-up call result:', error);
-    return { success: false, error: 'Failed to record call result.' };
+    console.error('Error completing follow-up task:', error);
+    return {
+      success: false,
+      message: '',
+      error: error instanceof Error ? error.message : 'Failed to record task outcome',
+    };
   }
 }
 
-/**
- * 4. Helper: Format Nigerian phone number into international WhatsApp format (e.g. 080... -> 23480...)
- */
-function formatToWhatsAppPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.startsWith('0')) {
-    return `234${digits.slice(1)}`;
-  }
-  if (digits.startsWith('234')) {
-    return digits;
-  }
-  return `234${digits}`;
-}
-
-/**
- * 5. Generate and Send/Simulate Automated Messaging Broadcast
- */
-export type MessageTemplateType = 'FIRST_TIMER_WELCOME' | 'ABSENT_CARE' | 'MIDWEEK_REMINDER' | 'CUSTOM';
-
-export interface DispatchItem {
-  personId: string;
-  recipientName: string;
-  phone: string;
-  whatsAppPhone: string;
-  messageText: string;
-  whatsAppLink: string;
-  status: 'PENDING' | 'SENT' | 'SIMULATED';
-}
-
-export async function sendFollowUpBroadcastAction({
-  recipientIds,
-  templateType,
-  customBody,
-  isDryRun = false,
-}: {
-  recipientIds: string[];
-  templateType: MessageTemplateType;
-  customBody?: string;
-  isDryRun?: boolean;
-}): Promise<{
+// ---------------------------------------------------------------------------
+// 5. Trigger Immediate Radar Sync (On-Demand scan & escalation)
+// ---------------------------------------------------------------------------
+export async function triggerRadarSyncAction(): Promise<{
   success: boolean;
-  count: number;
-  isDryRun: boolean;
-  dispatches: DispatchItem[];
+  tasksCreated: number;
+  tasksEscalated: number;
+  metrics: RadarMetrics;
   error?: string;
 }> {
   try {
-    if (!recipientIds || recipientIds.length === 0) {
+    const auth = await requireStaffSession(['FOLLOWUP', 'ADMIN']);
+    if (!auth.authorized) {
       return {
         success: false,
-        count: 0,
-        isDryRun,
-        dispatches: [],
-        error: 'Please select at least one recipient.',
+        tasksCreated: 0,
+        tasksEscalated: 0,
+        metrics: {
+          missed1WeekCount: 0,
+          missed2WeeksCount: 0,
+          firstTimers72hCount: 0,
+          escalatedCount: 0,
+          totalActiveMembers: 0,
+          lastUpdatedWat: '',
+        },
+        error: auth.error || 'Unauthorized staff access.',
       };
     }
 
-    const people = await prisma.person.findMany({
-      where: { id: { in: recipientIds }, isActive: true },
-    });
+    const syncResult = await syncFollowUpTasks();
+    const escalationResult = await executeAutoEscalationScan();
 
-    const dispatches: DispatchItem[] = people.map((person) => {
-      let messageText = '';
+    revalidatePath('/followup');
 
-      switch (templateType) {
-        case 'FIRST_TIMER_WELCOME':
-          messageText = `Good day ${person.firstName}! 🎉 It was an honour having you worship with us at RCCG Jesus Covenant Zone! We pray God's immense peace and blessings remain upon you and your family this week. If you ever need prayer or guidance, we are always here for you. Have a fruitful week in His presence! 🙏`;
-          break;
-
-        case 'ABSENT_CARE':
-          messageText = `Hello ${person.firstName}, warm Christian greetings from RCCG Jesus Covenant Zone! We missed your presence in church last Sunday and wanted to check in on your welfare. We are standing with you in prayer and look forward to fellowshipping together this coming Sunday. May the Lord strengthen you! ❤️`;
-          break;
-
-        case 'MIDWEEK_REMINDER':
-          messageText = `Calvary greetings ${person.firstName}! Join us this evening for our Faith Clinic / Midweek Service at 6:00 PM. Come with faith to receive a fresh word and divine empowerment from the Lord. See you in church! 🕊️`;
-          break;
-
-        case 'CUSTOM':
-          messageText = (customBody || 'God bless you!')
-            .replace(/{FirstName}/g, person.firstName)
-            .replace(/{FullName}/g, `${person.firstName} ${person.lastName}`);
-          break;
-      }
-
-      const waPhone = formatToWhatsAppPhone(person.phone);
-      const whatsAppLink = `https://wa.me/${waPhone}?text=${encodeURIComponent(messageText)}`;
-
-      return {
-        personId: person.id,
-        recipientName: `${person.firstName} ${person.lastName}`,
-        phone: person.phone,
-        whatsAppPhone: waPhone,
-        messageText,
-        whatsAppLink,
-        status: isDryRun ? 'SIMULATED' : 'SENT',
-      };
-    });
+    const ngInfo = getNigerianTimeInfo();
 
     return {
       success: true,
-      count: dispatches.length,
-      isDryRun,
-      dispatches,
+      tasksCreated: syncResult.createdCount,
+      tasksEscalated: escalationResult.escalatedCount,
+      metrics: {
+        missed1WeekCount: syncResult.radarResult.stats.missed1WeekCount,
+        missed2WeeksCount: syncResult.radarResult.stats.missed2WeeksCount,
+        firstTimers72hCount: syncResult.radarResult.stats.firstTimers72hCount,
+        escalatedCount: syncResult.radarResult.stats.escalatedCount,
+        totalActiveMembers: syncResult.radarResult.totalActiveMembers,
+        lastUpdatedWat: `${ngInfo.formatted12Hour} WAT`,
+      },
     };
   } catch (error) {
-    console.error('Error generating follow-up broadcast:', error);
+    console.error('Error triggering radar sync action:', error);
     return {
       success: false,
-      count: 0,
-      isDryRun,
-      dispatches: [],
-      error: 'Failed to dispatch broadcast.',
-    };
-  }
-}
-
-/**
- * 6. Assign Member to Calling Group
- */
-export async function assignPersonToGroupAction({
-  personId,
-  groupId,
-}: {
-  personId: string;
-  groupId: string | null;
-}) {
-  try {
-    await prisma.person.update({
-      where: { id: personId },
-      data: { groupId },
-    });
-
-    revalidatePath('/followup');
-    return { success: true };
-  } catch (error) {
-    console.error('Error assigning person to group:', error);
-    return { success: false, error: 'Failed to assign member to calling group.' };
-  }
-}
-
-/**
- * 7. Create New Calling Group
- */
-export async function createCallingGroupAction({ name }: { name: string }) {
-  try {
-    const church = await prisma.church.findFirst();
-    if (!church) return { success: false, error: 'Church not found.' };
-
-    const group = await prisma.group.create({
-      data: {
-        churchId: church.id,
-        name: name.trim(),
+      tasksCreated: 0,
+      tasksEscalated: 0,
+      metrics: {
+        missed1WeekCount: 0,
+        missed2WeeksCount: 0,
+        firstTimers72hCount: 0,
+        escalatedCount: 0,
+        totalActiveMembers: 0,
+        lastUpdatedWat: '',
       },
-    });
-
-    revalidatePath('/followup');
-    return { success: true, group };
-  } catch (error) {
-    console.error('Error creating group:', error);
-    return { success: false, error: 'Failed to create group.' };
+      error: error instanceof Error ? error.message : 'Failed to trigger radar sync',
+    };
   }
 }

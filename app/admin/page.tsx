@@ -6,7 +6,6 @@ import Link from 'next/link';
 import {
   Users,
   UserPlus,
-  Briefcase,
   Sparkles,
   Smartphone,
   RefreshCw,
@@ -14,15 +13,16 @@ import {
   Phone,
   MessageCircle,
   Clock,
-  Shield,
   Lock,
   Calendar,
   TrendingUp,
   FileSpreadsheet,
   ChevronDown,
-  GraduationCap,
-  BookOpen,
   HeartHandshake,
+  Cake,
+  Upload,
+  AlertTriangle,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   getAdminScorecardAction,
@@ -34,6 +34,7 @@ import Toast from '../components/Toast';
 import CustomDropdown from '../components/CustomDropdown';
 import ExportExcelModal from '../components/ExportExcelModal';
 import ManageServicesModal from '../components/ManageServicesModal';
+import ImportMembersModal from '../components/ImportMembersModal';
 import AmbientBackground from '../components/AmbientBackground';
 import { formatTimeRange12 } from '@/lib/service-resolver';
 
@@ -51,7 +52,9 @@ export default function AdminScorecardDashboard() {
   const [pinError, setPinError] = useState(false);
 
   // Active view tab
-  const [activeTab, setActiveTab] = useState<'SERVICES' | 'FIRST_TIMERS' | 'ROLL_CALL' | 'TREND'>('SERVICES');
+  const [activeTab, setActiveTab] = useState<
+    'SERVICES' | 'FIRST_TIMERS' | 'ROLL_CALL' | 'FOLLOW_UP' | 'BIRTHDAYS' | 'TREND'
+  >('SERVICES');
 
   // Export Modal state
   const [showExportModal, setShowExportModal] = useState(false);
@@ -66,15 +69,13 @@ export default function AdminScorecardDashboard() {
   // Manage Services Modal state
   const [showServicesModal, setShowServicesModal] = useState(false);
 
-  // Helper to format role category (Worker, Youth, Adult, First-Timer, Sunday School)
-  function getCategoryDisplay(person: any, subClass?: string | null) {
-    if (subClass) return `${subClass} Sunday School`;
+  // Import Members Modal state
+  const [showImportModal, setShowImportModal] = useState(false);
+
+  // Helper to format Youth-focused category display
+  function getCategoryDisplay(person: any) {
     if (person?.status === 'FIRST_TIMER') return 'First-Timer';
-    const sub = person?.subCategory;
-    const cat = person?.category;
-    if (cat === 'WORKER' || sub === 'WORKER' || sub === 'YOUTH_WORKER' || sub === 'ADULT_WORKER') return 'Worker';
-    if (cat === 'YOUTH' || sub === 'YOUTH') return 'Youth';
-    return 'Adult';
+    return 'Youth Member';
   }
 
   // Toast Notification state
@@ -85,38 +86,63 @@ export default function AdminScorecardDashboard() {
   } | null>(null);
 
   useEffect(() => {
-    checkSessionAction().then((sessionRes) => {
-      if (sessionRes.role === 'ADMIN') {
-        setIsAuthenticated(true);
-        loadScorecard('TODAY');
-        return;
-      }
-      if (typeof window !== 'undefined') {
-        const auth = sessionStorage.getItem('rccg_admin_auth');
-        if (auth === 'true') {
+    checkSessionAction()
+      .then((sessionRes) => {
+        if (sessionRes?.role === 'ADMIN') {
           setIsAuthenticated(true);
           loadScorecard('TODAY');
           return;
         }
-      }
-      setLoading(false);
-    });
+        if (typeof window !== 'undefined') {
+          const auth = sessionStorage.getItem('rccg_admin_auth');
+          if (auth === 'true') {
+            setIsAuthenticated(true);
+            loadScorecard('TODAY');
+            return;
+          }
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
   }, []);
+
+  // Automatic background refresh every 30 seconds for real-time live attendance sync
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const interval = setInterval(() => {
+      loadScorecard(timeRange, selectedDate);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, timeRange, selectedDate]);
 
   async function loadScorecard(range: AdminTimeRange = timeRange, dateStr: string = selectedDate) {
     setRefreshing(true);
-    const res = await getAdminScorecardAction(range, dateStr || undefined);
-    if (res.success) {
-      setData(res);
-    } else {
+    try {
+      if (typeof getAdminScorecardAction !== 'function') {
+        throw new Error('Admin scorecard action is unavailable.');
+      }
+      const res = await getAdminScorecardAction(range, dateStr || undefined);
+      if (res?.success) {
+        setData(res);
+      } else {
+        setToast({
+          type: 'error',
+          title: 'Error Loading Data',
+          message: res?.error || 'Failed to load attendance metrics.',
+        });
+      }
+    } catch (err) {
       setToast({
         type: 'error',
         title: 'Error Loading Data',
-        message: res.error || 'Failed to load attendance metrics.',
+        message: err instanceof Error ? err.message : 'Failed to load attendance metrics.',
       });
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-    setLoading(false);
-    setRefreshing(false);
   }
 
   function handleTimeRangeChange(newRange: AdminTimeRange) {
@@ -161,8 +187,8 @@ export default function AdminScorecardDashboard() {
           </div>
 
           <div className="space-y-1">
-            <h1 className="text-lg font-bold text-slate-900">Leadership Access</h1>
-            <p className="text-xs text-slate-500 font-medium">Enter your 4-digit Pastor / Admin PIN</p>
+            <h1 className="text-lg font-bold text-slate-900">Admin</h1>
+            <p className="text-xs text-slate-500 font-medium">Enter your 4-digit Admin PIN</p>
           </div>
 
           <form onSubmit={handlePinSubmit} className="space-y-4">
@@ -273,6 +299,27 @@ export default function AdminScorecardDashboard() {
         onServicesUpdated={() => loadScorecard(timeRange)}
       />
 
+      {/* Import Members (Excel / Word) Modal */}
+      <ImportMembersModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onSuccessToast={(msg) =>
+          setToast({
+            type: 'success',
+            title: 'Members Imported',
+            message: msg,
+          })
+        }
+        onErrorToast={(msg) =>
+          setToast({
+            type: 'error',
+            title: 'Import Error',
+            message: msg,
+          })
+        }
+        onImported={() => loadScorecard(timeRange, selectedDate)}
+      />
+
       {/* Top Header */}
       <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-30 px-4 py-3 shadow-xs">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -355,15 +402,16 @@ export default function AdminScorecardDashboard() {
               <span>Refresh</span>
             </button>
 
-            {/* Follow-Up & Care Hub Button */}
-            <Link
-              href="/followup"
-              className="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-3 py-2 rounded-xl border border-emerald-300 font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
-              title="Open Volunteer Calling & Automated Follow-up Desk"
+            {/* Import Members (Excel / Word) Button */}
+            <button
+              type="button"
+              onClick={() => setShowImportModal(true)}
+              className="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-800 px-3 py-2 rounded-xl border border-indigo-200 font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-[0.97]"
+              title="Import Youth members from Excel (.xlsx, .csv) or Word (.docx)"
             >
-              <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Follow-Up Desk</span>
-            </Link>
+              <Upload className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Import Members (Excel / Word)</span>
+            </button>
 
             {/* Export Excel / CSV Button */}
             <button
@@ -406,14 +454,14 @@ export default function AdminScorecardDashboard() {
                     🔴 Live Service in Session: {data.activeService.name} ({formatTimeRange12(data.activeService.startTime, data.activeService.endTime)})
                   </span>
                   <span className="text-[11px] text-emerald-800">
-                    Attendance check-ins are actively streaming in West Africa Time.
+                    Attendance check-ins are streaming live.
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Executive Metric Cards: Total Present, Workers, Youth, Adults, Youth Sunday School, Adult Sunday School, First-Timers */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            {/* Youth-Focused Executive Metric Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Metric 1: Total Present */}
               <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
                 <div className="flex items-center justify-between">
@@ -427,90 +475,26 @@ export default function AdminScorecardDashboard() {
                 <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
                   {data?.totalUniqueAttendees || 0}
                 </div>
-                <p className="text-[10px] text-slate-500 font-medium">All church attendees</p>
+                <p className="text-[10px] text-slate-500 font-medium">Youth &amp; First-Timers</p>
               </div>
 
-              {/* Metric 2: Workers */}
+              {/* Metric 2: Youth Members */}
               <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Workers
-                  </span>
-                  <div className="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                    <Briefcase className="w-4 h-4" />
-                  </div>
-                </div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-indigo-600">
-                  {data?.categoryBreakdown?.totalWorkers || 0}
-                </div>
-                <p className="text-[10px] text-slate-500 font-medium">Youth & adult workers</p>
-              </div>
-
-              {/* Metric 3: Youth */}
-              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Youth
+                    Youth Members
                   </span>
                   <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
                     <Sparkles className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-extrabold text-amber-600">
-                  {data?.categoryBreakdown?.totalYouth || 0}
+                  {data?.categoryBreakdown?.totalYouth ?? Math.max(0, (data?.totalUniqueAttendees || 0) - (data?.totalFirstTimers || 0))}
                 </div>
-                <p className="text-[10px] text-slate-500 font-medium">Youth attendees</p>
+                <p className="text-[10px] text-slate-500 font-medium">Returning youth</p>
               </div>
 
-              {/* Metric 4: Adults */}
-              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Adults
-                  </span>
-                  <div className="w-7 h-7 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                    <Users className="w-4 h-4" />
-                  </div>
-                </div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-sky-700">
-                  {data?.categoryBreakdown?.totalAdults || 0}
-                </div>
-                <p className="text-[10px] text-slate-500 font-medium">Adult attendees</p>
-              </div>
-
-              {/* Metric 5: Youth Sunday School */}
-              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Youth SS
-                  </span>
-                  <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                    <GraduationCap className="w-4 h-4" />
-                  </div>
-                </div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-purple-700">
-                  {data?.categoryBreakdown?.youthSundaySchool || 0}
-                </div>
-                <p className="text-[10px] text-slate-500 font-medium">Youth Sunday School</p>
-              </div>
-
-              {/* Metric 6: Adult Sunday School */}
-              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Adult SS
-                  </span>
-                  <div className="w-7 h-7 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
-                    <BookOpen className="w-4 h-4" />
-                  </div>
-                </div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-teal-700">
-                  {data?.categoryBreakdown?.adultSundaySchool || 0}
-                </div>
-                <p className="text-[10px] text-slate-500 font-medium">Adult Sunday School</p>
-              </div>
-
-              {/* Metric 7: First-Timers */}
+              {/* Metric 3: First-Timers */}
               <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -525,14 +509,30 @@ export default function AdminScorecardDashboard() {
                 </div>
                 <p className="text-[10px] text-slate-500 font-medium">New souls registered</p>
               </div>
+
+              {/* Metric 4: Self Check-In Rate */}
+              <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Self Check-In
+                  </span>
+                  <div className="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-indigo-600">
+                  {data?.selfScanPercentage ?? 0}%
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium">QR self-scan share</p>
+              </div>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex rounded-2xl bg-slate-100 p-1.5 border border-slate-200 max-w-lg">
+            <div className="flex flex-wrap rounded-2xl bg-slate-100 p-1.5 border border-slate-200 gap-1">
               <button
                 type="button"
                 onClick={() => setActiveTab('SERVICES')}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                className={`flex-1 min-w-[100px] py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.97] ${
                   activeTab === 'SERVICES'
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -543,7 +543,7 @@ export default function AdminScorecardDashboard() {
               <button
                 type="button"
                 onClick={() => setActiveTab('FIRST_TIMERS')}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                className={`flex-1 min-w-[120px] py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.97] ${
                   activeTab === 'FIRST_TIMERS'
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -554,7 +554,7 @@ export default function AdminScorecardDashboard() {
               <button
                 type="button"
                 onClick={() => setActiveTab('ROLL_CALL')}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                className={`flex-1 min-w-[110px] py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.97] ${
                   activeTab === 'ROLL_CALL'
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -562,11 +562,35 @@ export default function AdminScorecardDashboard() {
               >
                 Full Roll ({data?.recentAttendanceRecords?.length || 0})
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('FOLLOW_UP')}
+                className={`flex-1 min-w-[130px] py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.97] ${
+                  activeTab === 'FOLLOW_UP'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <HeartHandshake className="w-3.5 h-3.5" />
+                <span>Follow-Up ({data?.followUpSummary?.recentResults?.length || 0})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('BIRTHDAYS')}
+                className={`flex-1 min-w-[125px] py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.97] ${
+                  activeTab === 'BIRTHDAYS'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Cake className="w-3.5 h-3.5" />
+                <span>Birthdays ({data?.upcomingBirthdays?.next7DaysCount || 0})</span>
+              </button>
               {data?.trendHistory && data.trendHistory.length > 1 && (
                 <button
                   type="button"
                   onClick={() => setActiveTab('TREND')}
-                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                  className={`flex-1 min-w-[100px] py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.97] ${
                     activeTab === 'TREND'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -637,37 +661,12 @@ export default function AdminScorecardDashboard() {
                           </div>
                         </div>
 
-                        {/* Demographic & Class Split Pills */}
+                        {/* Youth & First-Timer Split Pills */}
                         {hasRecords ? (
                           <div className="flex flex-wrap gap-1.5 text-[11px] pt-1 border-t border-slate-100">
-                            {isSundaySchool ? (
-                              <>
-                                <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2.5 py-1 rounded-xl font-bold">
-                                  Adult Sunday School: {svc.adultSundaySchoolCount ?? svc.adultCount ?? 0}
-                                </span>
-                                <span className="bg-purple-50 text-purple-800 border border-purple-200 px-2.5 py-1 rounded-xl font-bold">
-                                  Youth Sunday School: {svc.youthSundaySchoolCount ?? svc.youthCount ?? 0}
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                {(svc.workersCount ?? 0) > 0 && (
-                                  <span className="bg-indigo-50 text-indigo-800 border border-indigo-200 px-2.5 py-1 rounded-xl font-bold">
-                                    Workers: {svc.workersCount}
-                                  </span>
-                                )}
-                                {(svc.adultCount ?? 0) > 0 && (
-                                  <span className="bg-sky-50 text-sky-800 border border-sky-200 px-2.5 py-1 rounded-xl font-bold">
-                                    Adults: {svc.adultCount}
-                                  </span>
-                                )}
-                                {(svc.youthCount ?? 0) > 0 && (
-                                  <span className="bg-purple-50 text-purple-800 border border-purple-200 px-2.5 py-1 rounded-xl font-bold">
-                                    Youth: {svc.youthCount}
-                                  </span>
-                                )}
-                              </>
-                            )}
+                            <span className="bg-purple-50 text-purple-800 border border-purple-200 px-2.5 py-1 rounded-xl font-bold">
+                              Youth Members: {Math.max(0, svc.totalPresent - (svc.firstTimersCount ?? 0))}
+                            </span>
 
                             {(svc.firstTimersCount ?? 0) > 0 && (
                               <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-xl font-bold flex items-center gap-1">
@@ -741,7 +740,7 @@ export default function AdminScorecardDashboard() {
                                     </span>
                                     <span className="text-[11px] text-slate-500 font-mono">
                                       Arrived: <strong className="text-slate-800">{timeFormatted}</strong> &bull;{' '}
-                                      {getCategoryDisplay(r.person, r.subClass)}
+                                      {getCategoryDisplay(r.person)}
                                     </span>
                                   </div>
 
@@ -773,7 +772,7 @@ export default function AdminScorecardDashboard() {
                   <h2 className="text-sm font-bold text-slate-900">
                     First-Timers Captured ({data?.firstTimersList?.length || 0})
                   </h2>
-                  <span className="text-xs text-slate-500 font-medium">1-Tap Pastoral Outreach</span>
+                  <span className="text-xs text-slate-500 font-medium">1-Tap Admin Outreach</span>
                 </div>
 
                 {data?.firstTimersList?.length === 0 ? (
@@ -819,7 +818,7 @@ export default function AdminScorecardDashboard() {
                             </p>
                           </div>
 
-                          {/* Quick 1-Tap Pastoral Action Buttons */}
+                          {/* Quick 1-Tap Admin Action Buttons */}
                           <div className="flex items-center gap-2 shrink-0">
                             <a
                               href={`https://wa.me/${intlPhone}?text=${welcomeMsg}`}
@@ -889,7 +888,7 @@ export default function AdminScorecardDashboard() {
                               </td>
                               <td className="p-3.5 text-slate-600">
                                 <span className="px-2 py-0.5 bg-slate-100 rounded-md font-semibold text-[11px]">
-                                  {getCategoryDisplay(r.person, r.subClass)}
+                                  {getCategoryDisplay(r.person)}
                                 </span>
                               </td>
                               <td className="p-3.5 font-semibold text-blue-700">
@@ -926,7 +925,279 @@ export default function AdminScorecardDashboard() {
               </div>
             )}
 
-            {/* TAB 4: HISTORICAL ATTENDANCE TREND */}
+            {/* TAB 4: FOLLOW-UP OUTCOMES & TASKS */}
+            {activeTab === 'FOLLOW_UP' && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pending Tasks</p>
+                    <p className="text-2xl font-extrabold text-amber-600 mt-1">
+                      {data?.followUpSummary?.pendingCount ?? 0}
+                    </p>
+                  </div>
+                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Contacted</p>
+                    <p className="text-2xl font-extrabold text-emerald-600 mt-1">
+                      {data?.followUpSummary?.contactedCount ?? 0}
+                    </p>
+                  </div>
+                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Escalated</p>
+                    <p className="text-2xl font-extrabold text-rose-600 mt-1">
+                      {data?.followUpSummary?.escalatedCount ?? 0}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Recent Follow-Up Outcomes */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Recent Follow-Up Outcomes ({data?.followUpSummary?.totalResultsCount ?? 0} total)</span>
+                    </h2>
+                  </div>
+
+                  {!data?.followUpSummary?.recentResults?.length ? (
+                    <div className="bg-white/90 border border-slate-200 rounded-3xl p-8 text-center space-y-1">
+                      <HeartHandshake className="w-8 h-8 text-slate-300 mx-auto" />
+                      <p className="text-sm font-semibold text-slate-700">No follow-up outcomes logged yet.</p>
+                      <p className="text-xs text-slate-500">
+                        Outcomes logged by the Follow-Up team will appear here automatically.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {data.followUpSummary.recentResults.map((res) => {
+                        const cleanPhone = (res.phone || '').replace(/\D/g, '');
+                        const intlPhone = cleanPhone.startsWith('0') ? `234${cleanPhone.slice(1)}` : cleanPhone;
+                        const isAttention =
+                          res.outcome.toLowerCase().includes('prayer') ||
+                          res.outcome.toLowerCase().includes('visit') ||
+                          res.outcome.toLowerCase().includes('attention');
+
+                        return (
+                          <div
+                            key={res.id}
+                            className="bg-white/95 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-bold text-slate-900">{res.personName}</span>
+                                <span
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                    isAttention
+                                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  }`}
+                                >
+                                  {res.outcome}
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-medium">
+                                  Week {res.weekNumber} &bull; Caller: <strong className="text-slate-700">{res.callerName}</strong>
+                                </span>
+                              </div>
+                              {res.note && (
+                                <p className="text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1.5">
+                                  {res.note}
+                                </p>
+                              )}
+                              <p className="text-[11px] text-slate-400 font-mono">{res.createdAtFormatted}</p>
+                            </div>
+
+                            {cleanPhone.length >= 7 && (
+                              <div className="flex items-center gap-2 shrink-0">
+                                <a
+                                  href={`https://wa.me/${intlPhone}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1 active:scale-[0.97]"
+                                >
+                                  <MessageCircle className="w-3.5 h-3.5" />
+                                  <span>WhatsApp</span>
+                                </a>
+                                <a
+                                  href={`tel:${res.phone}`}
+                                  className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl border border-slate-200 transition-colors flex items-center gap-1 active:scale-[0.97]"
+                                >
+                                  <Phone className="w-3.5 h-3.5" />
+                                  <span>Call</span>
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Active & Escalated Tasks */}
+                <div className="space-y-3">
+                  <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <span>Open &amp; Escalated Follow-Up Tasks ({data?.followUpSummary?.activeTasks?.length ?? 0})</span>
+                  </h2>
+
+                  {!data?.followUpSummary?.activeTasks?.length ? (
+                    <div className="bg-white/90 border border-slate-200 rounded-3xl p-6 text-center text-xs text-slate-500">
+                      No open or escalated follow-up tasks.
+                    </div>
+                  ) : (
+                    <div className="bg-white/95 border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+                      <div className="overflow-x-auto max-h-80">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold">
+                            <tr>
+                              <th className="p-3">Member</th>
+                              <th className="p-3">Reason</th>
+                              <th className="p-3">Status</th>
+                              <th className="p-3">Due</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {data.followUpSummary.activeTasks.map((task) => (
+                              <tr key={task.id} className="hover:bg-slate-50/80">
+                                <td className="p-3 font-bold text-slate-900">
+                                  {task.personName}
+                                  <span className="block text-[11px] font-normal text-slate-500">{task.phone}</span>
+                                </td>
+                                <td className="p-3 text-slate-700 font-medium">{task.reason.replace(/_/g, ' ')}</td>
+                                <td className="p-3">
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                      task.status === 'ESCALATED'
+                                        ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                                    }`}
+                                  >
+                                    {task.status}
+                                  </span>
+                                </td>
+                                <td className="p-3 font-mono text-slate-600">
+                                  {task.dueDateFormatted}
+                                  {task.isOverdue && (
+                                    <span className="ml-1.5 text-[10px] font-bold text-rose-600">Overdue</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: UPCOMING BIRTHDAYS */}
+            {activeTab === 'BIRTHDAYS' && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Today</p>
+                    <p className="text-2xl font-extrabold text-emerald-600 mt-1">
+                      {data?.upcomingBirthdays?.todayCount ?? 0}
+                    </p>
+                  </div>
+                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tomorrow</p>
+                    <p className="text-2xl font-extrabold text-amber-600 mt-1">
+                      {data?.upcomingBirthdays?.tomorrowCount ?? 0}
+                    </p>
+                  </div>
+                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Next 7 Days</p>
+                    <p className="text-2xl font-extrabold text-blue-600 mt-1">
+                      {data?.upcomingBirthdays?.next7DaysCount ?? 0}
+                    </p>
+                  </div>
+                </div>
+
+                {!data?.upcomingBirthdays?.celebrants?.length ? (
+                  <div className="bg-white/90 border border-slate-200 rounded-3xl p-8 text-center space-y-1">
+                    <Cake className="w-8 h-8 text-slate-300 mx-auto" />
+                    <p className="text-sm font-semibold text-slate-700">No upcoming birthdays found.</p>
+                    <p className="text-xs text-slate-500">
+                      Import members with birth dates via Excel/Word to populate the birthday calendar.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-white/95 border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+                    <div className="overflow-x-auto max-h-[28rem]">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold sticky top-0">
+                          <tr>
+                            <th className="p-3.5">Name</th>
+                            <th className="p-3.5">Birthday</th>
+                            <th className="p-3.5">When</th>
+                            <th className="p-3.5">Phone</th>
+                            <th className="p-3.5 text-right">Reach Out</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {data.upcomingBirthdays.celebrants.map((c) => {
+                            const cleanPhone = (c.phone || '').replace(/\D/g, '');
+                            const intlPhone = cleanPhone.startsWith('0') ? `234${cleanPhone.slice(1)}` : cleanPhone;
+                            const msg = encodeURIComponent(
+                              `Happy Birthday ${c.fullName}! Wishing you God's abundant grace and joy from RCCG Jesus Covenant Zone!`
+                            );
+
+                            return (
+                              <tr key={c.personId} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="p-3.5 font-bold text-slate-900">{c.fullName}</td>
+                                <td className="p-3.5 font-semibold text-slate-700">{c.birthDateFormatted}</td>
+                                <td className="p-3.5">
+                                  {c.isToday ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      Today
+                                    </span>
+                                  ) : c.isTomorrow ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                      Tomorrow
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-500 font-medium">In {c.daysUntil} days</span>
+                                  )}
+                                </td>
+                                <td className="p-3.5 font-mono text-slate-600">{c.phone}</td>
+                                <td className="p-3.5 text-right">
+                                  {cleanPhone.length >= 7 ? (
+                                    <div className="inline-flex items-center gap-1.5">
+                                      <a
+                                        href={`https://wa.me/${intlPhone}?text=${msg}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] inline-flex items-center gap-1 active:scale-[0.97]"
+                                      >
+                                        <MessageCircle className="w-3 h-3" />
+                                        <span>WhatsApp</span>
+                                      </a>
+                                      <a
+                                        href={`tel:${c.phone}`}
+                                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold text-[11px] inline-flex items-center gap-1 active:scale-[0.97]"
+                                      >
+                                        <Phone className="w-3 h-3" />
+                                        <span>Call</span>
+                                      </a>
+                                    </div>
+                                  ) : (
+                                    <span className="text-slate-400">—</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 6: HISTORICAL ATTENDANCE TREND */}
             {activeTab === 'TREND' && data?.trendHistory && (
               <div className="space-y-3">
                 <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
