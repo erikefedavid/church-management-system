@@ -22,13 +22,16 @@ interface GeofenceGatewayAlertProps {
     dayOfWeek?: string;
   } | null;
   nextUpcomingService?: {
+    name?: string;
+    startTime?: string;
+    endTime?: string;
+    dayOfWeek?: string;
+    formattedSchedule?: string;
     service?: {
       name: string;
       startTime: string;
       endTime: string;
     };
-    daysUntil?: number;
-    formattedTime?: string;
   } | null;
   isLiveNow?: boolean;
   churchName?: string;
@@ -48,9 +51,9 @@ export default function GeofenceGatewayAlert({
   onRefresh,
   geoChecking,
 }: GeofenceGatewayAlertProps) {
-  // Resolve service display name & timing
-  const displayService = activeService || nextUpcomingService?.service;
-  const serviceName = displayService?.name || 'RCCG Celebration Service';
+  // Resolve service display name & timing (NextUpcomingService has flat fields; support legacy nested .service too)
+  const displayService = activeService || nextUpcomingService?.service || nextUpcomingService;
+  const serviceName = displayService?.name || 'No Service in Session';
   const startTime = displayService?.startTime;
   const endTime = displayService?.endTime;
 
