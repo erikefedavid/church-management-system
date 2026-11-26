@@ -13,8 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RCCG Jesus Covenant Zone | Church Management Portal",
-  description: "Youths First Attendance & Management System - RCCG Jesus Covenant Zone",
+  title: "RCCG Jesus Covenant Zone | Youth Fellowship",
+  description:
+    "Youth Fellowship attendance, follow-up, and birthday care portal for RCCG Jesus Covenant Zone.",
+  icons: {
+    icon: "/rccg-logo.png",
+    apple: "/rccg-logo.png",
+  },
 };
 
 export default function RootLayout({
