@@ -23,9 +23,13 @@ import {
   Upload,
   AlertTriangle,
   CheckCircle2,
+  MapPin,
+  X,
 } from 'lucide-react';
 import {
   getAdminScorecardAction,
+  getChurchLocationAction,
+  updateChurchLocationAction,
   AdminScorecardResponse,
   AdminTimeRange,
 } from '../actions/admin';
@@ -71,6 +75,68 @@ export default function AdminScorecardDashboard() {
 
   // Import Members Modal state
   const [showImportModal, setShowImportModal] = useState(false);
+
+  // Sanctuary GPS Calibration Modal state
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [locLat, setLocLat] = useState('');
+  const [locLng, setLocLng] = useState('');
+  const [locRadius, setLocRadius] = useState('150');
+  const [locSaving, setLocSaving] = useState(false);
+  const [locDetecting, setLocDetecting] = useState(false);
+
+  async function openLocationModal() {
+    setShowLocationModal(true);
+    const res = await getChurchLocationAction();
+    if (res.success && res.latitude !== undefined && res.longitude !== undefined) {
+      setLocLat(String(res.latitude));
+      setLocLng(String(res.longitude));
+      setLocRadius(String(res.geofenceRadius ?? 150));
+    }
+  }
+
+  function handleDetectCurrentGps() {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      setToast({ type: 'error', message: 'Geolocation is not available on this device.' });
+      return;
+    }
+    setLocDetecting(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocLat(pos.coords.latitude.toFixed(6));
+        setLocLng(pos.coords.longitude.toFixed(6));
+        setLocDetecting(false);
+        setToast({
+          type: 'info',
+          message: `Detected GPS (±${Math.round(pos.coords.accuracy)}m accuracy). Click Save Location to apply.`,
+        });
+      },
+      () => {
+        setLocDetecting(false);
+        setToast({ type: 'error', message: 'Could not read GPS. Check browser location permission.' });
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  async function handleSaveChurchLocation(e: React.FormEvent) {
+    e.preventDefault();
+    const lat = parseFloat(locLat);
+    const lng = parseFloat(locLng);
+    const rad = parseInt(locRadius, 10) || 150;
+    setLocSaving(true);
+    const res = await updateChurchLocationAction({ latitude: lat, longitude: lng, geofenceRadius: rad });
+    setLocSaving(false);
+    if (res.success) {
+      setShowLocationModal(false);
+      setToast({
+        type: 'success',
+        title: 'Sanctuary GPS Updated',
+        message: `Geofence set to (${lat.toFixed(5)}, ${lng.toFixed(5)}) with ${rad}m radius.`,
+      });
+    } else {
+      setToast({ type: 'error', message: res.error || 'Failed to update location.' });
+    }
+  }
 
   // Helper to format Youth-focused category display
   function getCategoryDisplay(person: any) {
@@ -320,6 +386,100 @@ export default function AdminScorecardDashboard() {
         onImported={() => loadScorecard(timeRange, selectedDate)}
       />
 
+      {/* Sanctuary GPS Calibration Modal */}
+      {showLocationModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <form
+            onSubmit={handleSaveChurchLocation}
+            className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-xl space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-emerald-600" />
+                <h2 className="text-base font-bold text-slate-900">Sanctuary GPS Location</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLocationModal(false)}
+                className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Stand inside the church sanctuary on your phone and tap <strong>Use My Current GPS</strong>, or paste your Google Maps coordinates.
+            </p>
+
+            <button
+              type="button"
+              onClick={handleDetectCurrentGps}
+              disabled={locDetecting}
+              className="w-full py-2.5 px-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 text-xs font-bold transition-colors cursor-pointer"
+            >
+              {locDetecting ? 'Reading GPS...' : 'Use My Current GPS Location'}
+            </button>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">Latitude</label>
+                <input
+                  type="number"
+                  step="any"
+                  required
+                  value={locLat}
+                  onChange={(e) => setLocLat(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">Longitude</label>
+                <input
+                  type="number"
+                  step="any"
+                  required
+                  value={locLng}
+                  onChange={(e) => setLocLng(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                Geofence Radius (meters)
+              </label>
+              <input
+                type="number"
+                min={50}
+                max={2000}
+                required
+                value={locRadius}
+                onChange={(e) => setLocRadius(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLocationModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={locSaving}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
+              >
+                {locSaving ? 'Saving...' : 'Save Location'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Top Header */}
       <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-30 px-4 py-3 shadow-xs">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -381,6 +541,16 @@ export default function AdminScorecardDashboard() {
                 </button>
               )}
             </div>
+
+            <button
+              type="button"
+              onClick={openLocationModal}
+              className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl border border-slate-200 font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="Set exact church sanctuary GPS coordinates"
+            >
+              <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Sanctuary GPS</span>
+            </button>
 
             <button
               type="button"

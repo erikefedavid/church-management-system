@@ -22,7 +22,6 @@ import {
 } from '@/lib/device-lock';
 import Toast, { ToastProps } from '../components/Toast';
 import AmbientBackground from '../components/AmbientBackground';
-import EntranceSplash from '../components/EntranceSplash';
 import AttendanceHeader from '../components/attendance/AttendanceHeader';
 import RememberedProfileCard, {
   SavedMemberProfile,
@@ -49,7 +48,6 @@ export default function MemberCheckInPortal() {
   const [currentTimeString, setCurrentTimeString] = useState<string>('');
   const [isLiveNow, setIsLiveNow] = useState<boolean>(false);
   const [isReady, setIsReady] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
 
   // Geolocation state (strict real GPS enforced)
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -89,10 +87,6 @@ export default function MemberCheckInPortal() {
 
   const handleCloseToast = useCallback(() => {
     setToast(null);
-  }, []);
-
-  const handleSplashComplete = useCallback(() => {
-    setShowSplash(false);
   }, []);
 
   const persistCompletedCheckIn = useCallback(
@@ -549,15 +543,6 @@ export default function MemberCheckInPortal() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between selection:bg-blue-100 selection:text-blue-900">
       <AmbientBackground />
-
-      {/* Entrance Splash Loader */}
-      {showSplash && (
-        <EntranceSplash
-          onComplete={handleSplashComplete}
-          churchName={church?.name || 'RCCG Jesus Covenant Zone'}
-          isReady={isReady}
-        />
-      )}
 
       {/* Toast Alert */}
       {toast && (

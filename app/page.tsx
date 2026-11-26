@@ -57,22 +57,24 @@ const WEEKLY_SCHEDULE = [
 export default function LandingPage() {
   const shouldReduceMotion = useReducedMotion();
 
-  const heroMotionProps = shouldReduceMotion
-    ? {}
-    : {
-        initial: { opacity: 0, scale: 0.97 },
-        animate: { opacity: 1, scale: 1 },
-        transition: { duration: 0.28, ease: MOMENTUM_EASE },
-      };
+  const fadeUp = (delay = 0) =>
+    shouldReduceMotion
+      ? {}
+      : {
+          initial: { opacity: 0, y: 12, scale: 0.98 },
+          animate: { opacity: 1, y: 0, scale: 1 },
+          transition: { duration: 0.3, delay, ease: MOMENTUM_EASE },
+        };
 
-  const sectionRevealProps = shouldReduceMotion
-    ? {}
-    : {
-        initial: { opacity: 0, scale: 0.97 },
-        whileInView: { opacity: 1, scale: 1 },
-        viewport: { once: true, amount: 0.2 },
-        transition: { duration: 0.28, ease: MOMENTUM_EASE },
-      };
+  const scrollReveal = (delay = 0) =>
+    shouldReduceMotion
+      ? {}
+      : {
+          initial: { opacity: 0, y: 14, scale: 0.98 },
+          whileInView: { opacity: 1, y: 0, scale: 1 },
+          viewport: { once: true, amount: 0.12 },
+          transition: { duration: 0.28, delay, ease: MOMENTUM_EASE },
+        };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col selection:bg-blue-700 selection:text-white">
@@ -129,19 +131,22 @@ export default function LandingPage() {
             className="absolute inset-0 bg-slate-950/70"
           />
 
-          <motion.div
-            {...heroMotionProps}
-            className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center space-y-6"
-          >
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.1]">
+          <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center space-y-6">
+            <motion.h1
+              {...fadeUp(0.04)}
+              className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.1]"
+            >
               Know who showed up. Notice who is missing. Never forget anyone.
-            </h1>
+            </motion.h1>
 
-            <p className="text-base sm:text-lg text-slate-100 leading-relaxed max-w-2xl mx-auto">
+            <motion.p
+              {...fadeUp(0.1)}
+              className="text-base sm:text-lg text-slate-100 leading-relaxed max-w-2xl mx-auto"
+            >
               RCCG Jesus Covenant Zone&apos;s church management system turns Sunday check-ins into real pastoral care—recording sanctuary attendance accurately, alerting workers when a member or first-timer needs a call, and celebrating every youth birthday on time.
-            </p>
+            </motion.p>
 
-            <div className="pt-2 flex justify-center">
+            <motion.div {...fadeUp(0.16)} className="pt-2 flex justify-center">
               <motion.div {...(shouldReduceMotion ? {} : tactileTapProps)}>
                 <Link
                   href="/checkin"
@@ -151,9 +156,12 @@ export default function LandingPage() {
                   <ArrowRight className="w-5 h-5" />
                 </Link>
               </motion.div>
-            </div>
+            </motion.div>
 
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/20 max-w-xl mx-auto text-white">
+            <motion.div
+              {...fadeUp(0.22)}
+              className="grid grid-cols-3 gap-4 pt-6 border-t border-white/20 max-w-xl mx-auto text-white"
+            >
               <div>
                 <span className="block text-xl sm:text-2xl font-extrabold">150m</span>
                 <span className="text-xs font-medium text-slate-200">Sanctuary geofence</span>
@@ -166,17 +174,14 @@ export default function LandingPage() {
                 <span className="block text-xl sm:text-2xl font-extrabold">WAT</span>
                 <span className="text-xs font-medium text-slate-200">Auto service switch</span>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </section>
 
         {/* Screen 2: Pillar 1 — Attendance & Usher Care */}
         <section className="bg-white border-b border-slate-200 py-16 sm:py-24">
-          <motion.div
-            {...sectionRevealProps}
-            className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center"
-          >
-            <div className="lg:col-span-6 space-y-6">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+            <motion.div {...scrollReveal(0)} className="lg:col-span-6 space-y-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs font-bold text-blue-800">
                 <MapPin className="w-3.5 h-3.5" />
                 <span>Attendance &amp; Usher Care</span>
@@ -204,9 +209,9 @@ export default function LandingPage() {
                   <span>Ushers can sign in members without phones or internet directly at the entrance.</span>
                 </li>
               </ul>
-            </div>
+            </motion.div>
 
-            <div className="lg:col-span-6">
+            <motion.div {...scrollReveal(0.1)} className="lg:col-span-6">
               <div className="group relative aspect-[4/3] w-full rounded-3xl overflow-hidden border border-slate-200 bg-slate-100 shadow-md">
                 <Image
                   src="/images/geofence-map.jpg"
@@ -216,17 +221,14 @@ export default function LandingPage() {
                   className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
                 />
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </section>
 
         {/* Screen 3: Pillars 2 & 3 — Follow-Up & Birthday Care */}
         <section className="bg-[#f8fafc] border-b border-slate-200 py-16 sm:py-24">
-          <motion.div
-            {...sectionRevealProps}
-            className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12"
-          >
-            <div className="max-w-2xl space-y-3">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <motion.div {...scrollReveal(0)} className="max-w-2xl space-y-3">
               <span className="text-xs font-bold uppercase tracking-wider text-blue-700">
                 Pastoral Care &amp; Celebration
               </span>
@@ -236,11 +238,14 @@ export default function LandingPage() {
               <p className="text-base text-slate-700 leading-relaxed">
                 Attendance records automatically feed pastoral care—helping workers reach out early and celebrate members consistently.
               </p>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Follow-Up Care Card */}
-              <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xs flex flex-col">
+              <motion.div
+                {...scrollReveal(0.05)}
+                className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xs flex flex-col"
+              >
                 <div className="group relative aspect-[16/10] w-full bg-slate-100 overflow-hidden">
                   <Image
                     src="/images/followup-call.jpg"
@@ -262,10 +267,13 @@ export default function LandingPage() {
                     Follow-Up automatically surfaces members who missed 1 or 2 Sundays alongside new first-timers within their first 72 hours, so no one slips through the cracks unnoticed.
                   </p>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Birthday Care Card */}
-              <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xs flex flex-col">
+              <motion.div
+                {...scrollReveal(0.12)}
+                className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xs flex flex-col"
+              >
                 <div className="group relative aspect-[16/10] w-full bg-slate-100 overflow-hidden">
                   <Image
                     src="/images/followup-care.jpg"
@@ -287,15 +295,15 @@ export default function LandingPage() {
                     Tracks upcoming birthdays for tomorrow, the next 7 days, and the coming month—paired with automated Telegram reminders so the media and care teams celebrate every member on time.
                   </p>
                 </div>
-              </div>
+              </motion.div>
             </div>
-          </motion.div>
+          </div>
         </section>
 
         {/* Screen 4: Weekly Schedule (WAT) */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
           <motion.div
-            {...sectionRevealProps}
+            {...scrollReveal(0)}
             className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xs space-y-6"
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

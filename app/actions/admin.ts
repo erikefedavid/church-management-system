@@ -1581,3 +1581,85 @@ export async function parseAndImportMembers(
   }
 }
 
+/**
+ * Fetch current Sanctuary GPS coordinates and geofence radius.
+ */
+export async function getChurchLocationAction(): Promise<{
+  success: boolean;
+  latitude?: number;
+  longitude?: number;
+  geofenceRadius?: number;
+  error?: string;
+}> {
+  try {
+    const auth = await requireStaffSession(['ADMIN']);
+    if (!auth.authorized) {
+      return { success: false, error: auth.error || 'Unauthorized: Admin session required.' };
+    }
+
+    const church = await prisma.church.findFirst();
+    if (!church) {
+      return { success: false, error: 'No church found.' };
+    }
+
+    return {
+      success: true,
+      latitude: church.latitude,
+      longitude: church.longitude,
+      geofenceRadius: church.geofenceRadius,
+    };
+  } catch (error) {
+    console.error('Error fetching church location:', error);
+    return { success: false, error: 'Failed to load church location.' };
+  }
+}
+
+/**
+ * Update Sanctuary GPS coordinates and geofence radius (Admin only).
+ */
+export async function updateChurchLocationAction(params: {
+  latitude: number;
+  longitude: number;
+  geofenceRadius?: number;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const auth = await requireStaffSession(['ADMIN']);
+    if (!auth.authorized) {
+      return { success: false, error: auth.error || 'Unauthorized: Admin session required.' };
+    }
+
+    const { latitude, longitude, geofenceRadius } = params;
+    if (
+      typeof latitude !== 'number' ||
+      typeof longitude !== 'number' ||
+      isNaN(latitude) ||
+      isNaN(longitude) ||
+      Math.abs(latitude) > 90 ||
+      Math.abs(longitude) > 180 ||
+      (latitude === 0 && longitude === 0)
+    ) {
+      return { success: false, error: 'Invalid GPS coordinates.' };
+    }
+
+    const radius = Math.max(50, Math.min(2000, Math.round(geofenceRadius ?? 150)));
+    const church = await prisma.church.findFirst();
+    if (!church) {
+      return { success: false, error: 'No church found.' };
+    }
+
+    await prisma.church.update({
+      where: { id: church.id },
+      data: {
+        latitude,
+        longitude,
+        geofenceRadius: radius,
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating church location:', error);
+    return { success: false, error: 'Failed to save church location.' };
+  }
+}
+

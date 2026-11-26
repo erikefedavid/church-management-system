@@ -56,20 +56,28 @@ export async function usherGetServicesAction() {
 
     let justFinishedService = null;
     let latestCompletedService = null;
+    let usherGraceService = null;
     for (const svc of todayServices) {
       const [eh, em] = svc.endTime.split(':').map(Number);
       const endMins = eh * 60 + em;
       if (currentMins >= endMins) {
         latestCompletedService = svc;
-        // Ended within the last 120 minutes
+        // Ushers get 30 minutes after service endTime to mark latecomers
+        if (currentMins - endMins <= 30) {
+          usherGraceService = svc;
+        }
+        // Ended within the last 120 minutes (for report download)
         if (currentMins - endMins <= 120) {
           justFinishedService = svc;
         }
       }
     }
 
+    const usherCanMark = Boolean(activeRes.isLiveNow && activeRes.activeService) || Boolean(usherGraceService);
+    const effectiveActiveService = activeRes.activeService || usherGraceService || null;
+
     const defaultServiceId =
-      activeRes.activeService?.id ||
+      effectiveActiveService?.id ||
       justFinishedService?.id ||
       latestCompletedService?.id ||
       (todayServices.length > 0 ? todayServices[0].id : services[0]?.id || '');
@@ -83,11 +91,12 @@ export async function usherGetServicesAction() {
       services,
       todayServices,
       otherServices,
-      activeService: activeRes.activeService || null,
+      activeService: effectiveActiveService,
       activeServiceId: defaultServiceId,
       justFinishedService,
       currentDay: ngInfo.weekday,
-      isLiveNow: activeRes.isLiveNow,
+      isLiveNow: usherCanMark,
+      isUsherGrace: !activeRes.isLiveNow && Boolean(usherGraceService),
       nigerianTimeFormatted: activeRes.nigerianTimeFormatted,
       nextUpcomingService: activeRes.nextUpcomingService,
     };
@@ -253,16 +262,30 @@ export async function usherCheckInAction({
       return { success: false, error: 'Church not found.' };
     }
 
-    // Strict Guard: Attendance marking is ONLY active when a service is live right now!
+    // Ushers can mark during live service (including 20m buffer) OR up to 30m after service endTime
     const activeRes = await getActiveChurchService(church.id, new Date());
-    if (!activeRes.isLiveNow || !activeRes.activeService) {
-      return {
-        success: false,
-        error: 'No church service is currently live. Attendance marking only opens during official service hours.',
-      };
+    let targetService = activeRes.activeService;
+
+    if (!activeRes.isLiveNow || !targetService) {
+      const ngInfo = getNigerianTimeInfo(new Date());
+      const [ch, cm] = ngInfo.currentTimeString.split(':').map(Number);
+      const currentMins = ch * 60 + cm;
+
+      for (const svc of activeRes.todayServices) {
+        const [eh, em] = svc.endTime.split(':').map(Number);
+        const endMins = eh * 60 + em;
+        if (currentMins >= endMins && currentMins - endMins <= 30) {
+          targetService = svc;
+        }
+      }
     }
 
-    const targetService = activeRes.activeService;
+    if (!targetService) {
+      return {
+        success: false,
+        error: 'Service grace window (30 mins) has ended. Attendance marking is now closed.',
+      };
+    }
     const actualServiceId = targetService.id;
     const actualServiceName = targetService.name;
     const today = getNigerianDateMidnight();
