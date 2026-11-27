@@ -133,9 +133,9 @@ export default function AttachFlyerModal({
                   }
                   className="w-full h-11 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all font-medium"
                 >
-                  <option value="FLYER_READY">FLYER_READY — Approved for Broadcast</option>
-                  <option value="ACKNOWLEDGED">ACKNOWLEDGED — In Design Progress</option>
-                  <option value="SENT">SENT — Alert Received by Media</option>
+                  <option value="FLYER_READY">FLYER_READY - Approved for Broadcast</option>
+                  <option value="ACKNOWLEDGED">ACKNOWLEDGED - In Design Progress</option>
+                  <option value="SENT">SENT - Alert Received by Media</option>
                 </select>
               </div>
 

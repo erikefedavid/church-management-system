@@ -16,27 +16,14 @@ import { BirthdayCelebrantItem } from '@/app/actions/birthdays';
 
 interface CelebrantCardProps {
   celebrant: BirthdayCelebrantItem;
-  onSendManualAlert: (personId: string, type: 'T_MINUS_1_MEDIA' | 'DAY_OF_CELEBRATION' | 'DIRECT_MEMBER_DM') => Promise<void>;
   onOpenAttachModal: (celebrant: BirthdayCelebrantItem) => void;
 }
 
 export default function CelebrantCard({
   celebrant,
-  onSendManualAlert,
   onOpenAttachModal,
 }: CelebrantCardProps) {
-  const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [imageError, setImageError] = useState(false);
-
-  const handleSendTelegram = async () => {
-    setIsSendingTelegram(true);
-    try {
-      const type = celebrant.isToday ? 'DAY_OF_CELEBRATION' : 'T_MINUS_1_MEDIA';
-      await onSendManualAlert(celebrant.personId, type);
-    } finally {
-      setIsSendingTelegram(false);
-    }
-  };
 
   // Timing Pill determination
   let timingBadgeClass = 'bg-slate-100 text-slate-800 border-slate-200';
@@ -146,7 +133,7 @@ export default function CelebrantCard({
       </div>
 
       {/* Action Buttons (Strictly min 44px height for accessibility) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-slate-100">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
         {/* 1-Click WhatsApp Button */}
         <motion.a
           {...tactileTapProps}
@@ -159,19 +146,6 @@ export default function CelebrantCard({
           <MessageSquare className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
           <span className="truncate">1-Click WhatsApp</span>
         </motion.a>
-
-        {/* Telegram Media Flyer Alert */}
-        <motion.button
-          {...tactileTapProps}
-          type="button"
-          onClick={handleSendTelegram}
-          disabled={isSendingTelegram}
-          className="h-11 px-3 rounded-xl text-xs font-semibold text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200 flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-          title="Send media notification to Telegram bot"
-        >
-          <Palette className="w-3.5 h-3.5 text-blue-700 shrink-0" />
-          <span className="truncate">{isSendingTelegram ? 'Alerting...' : 'Alert Media Bot'}</span>
-        </motion.button>
 
         {/* Attach Graphic Flyer */}
         <motion.button

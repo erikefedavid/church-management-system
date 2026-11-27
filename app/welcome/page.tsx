@@ -300,7 +300,7 @@ export default function AttendanceProofPage() {
                 &ldquo;The LORD bless you and keep you; The LORD make His face shine upon you, and be gracious to you; The LORD lift up His countenance upon you, and give you peace.&rdquo;
               </p>
               <p className="text-[11px] font-bold text-blue-700 text-right font-sans">
-                — Numbers 6:24–26
+                Numbers 6:24-26
               </p>
             </div>
           </div>
@@ -389,7 +389,7 @@ export default function AttendanceProofPage() {
             &ldquo;Surely goodness and mercy shall follow me all the days of my life: and I will dwell in the house of the LORD for ever.&rdquo;
           </p>
           <span className="text-[11px] font-bold text-blue-700 block">
-            — Psalm 23:6
+            Psalm 23:6
           </span>
         </div>
       </main>

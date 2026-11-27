@@ -925,19 +925,7 @@ describe('Adversarial Attendance Stress & Concurrency Testing (Milestone 2)', ()
       expect(shortPhone.success).toBe(false);
       expect(shortPhone.error).toContain('at least 10 digits');
 
-      // Outside geofence radius
-      const outsidePerson = {
-        id: 'first-timer-outside',
-        firstName: 'Emeka',
-        lastName: 'Eze',
-        phone: '08012345678',
-        phoneLast4: '5678',
-        category: PersonCategory.YOUTH,
-        subCategory: 'YOUTH',
-        status: PersonStatus.FIRST_TIMER,
-      };
-      mockPrisma.person.findFirst.mockResolvedValueOnce(outsidePerson as any);
-
+      // Outside geofence radius (rejected before any DB read/write)
       const outsideRes = await registerFirstTimerAction({
         firstName: 'Emeka',
         lastName: 'Eze',

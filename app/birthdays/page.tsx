@@ -516,7 +516,7 @@ export default function BirthdayDashboardPage() {
 
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-4 text-center">
         <p className="text-xs italic text-slate-500">
-          &ldquo;The LORD bless you and keep you...&rdquo; — Numbers 6:24
+          &ldquo;The LORD bless you and keep you...&rdquo; (Numbers 6:24)
         </p>
       </footer>
     </div>

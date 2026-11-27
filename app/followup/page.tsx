@@ -328,7 +328,7 @@ export default function FollowUpDashboardPage() {
             </div>
           </div>
           <p className="text-xs italic text-slate-500 text-center">
-            &ldquo;Be sure you know the condition of your flocks...&rdquo; — Proverbs 27:23
+            &ldquo;Be sure you know the condition of your flocks...&rdquo; (Proverbs 27:23)
           </p>
         </div>
       </footer>

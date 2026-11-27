@@ -120,7 +120,7 @@ export default function LocationPromptModal({
               className="w-full min-h-[48px] bg-emerald-700 hover:bg-emerald-800 active:scale-[0.97] text-white font-bold rounded-2xl transition-[transform,background-color] duration-75 shadow-md shadow-emerald-700/20 flex items-center justify-center gap-2 text-sm cursor-pointer"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>Location Verified — Continue</span>
+              <span>Location Verified - Continue</span>
             </button>
           )}
 

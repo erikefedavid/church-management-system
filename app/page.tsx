@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
+import { animate, motion, useReducedMotion } from 'framer-motion';
 import {
   MapPin,
   Users,
@@ -53,6 +53,48 @@ const WEEKLY_SCHEDULE = [
     note: 'Monthly covenant prayer hour',
   },
 ];
+
+const HERO_PHRASES = [
+  'Know who showed up.',
+  'Notice who is missing.',
+  'Never forget anyone.',
+];
+
+function AnimatedDigit({
+  target,
+  suffix = '',
+  delay = 0,
+}: {
+  target: number;
+  suffix?: string;
+  delay?: number;
+}) {
+  const shouldReduceMotion = useReducedMotion();
+  const [display, setDisplay] = useState(shouldReduceMotion ? target : 0);
+
+  useEffect(() => {
+    if (shouldReduceMotion) {
+      setDisplay(target);
+      return;
+    }
+
+    const controls = animate(0, target, {
+      duration: 0.65,
+      delay,
+      ease: MOMENTUM_EASE,
+      onUpdate: (latest) => setDisplay(Math.round(latest)),
+    });
+
+    return () => controls.stop();
+  }, [target, delay, shouldReduceMotion]);
+
+  return (
+    <span className="tabular-nums">
+      {display}
+      {suffix}
+    </span>
+  );
+}
 
 export default function LandingPage() {
   const shouldReduceMotion = useReducedMotion();
@@ -132,21 +174,37 @@ export default function LandingPage() {
           />
 
           <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center space-y-6">
-            <motion.h1
-              {...fadeUp(0.04)}
-              className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.1]"
-            >
-              Know who showed up. Notice who is missing. Never forget anyone.
-            </motion.h1>
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
+              {HERO_PHRASES.map((phrase, idx) => (
+                <span key={phrase} className="inline-block overflow-hidden align-bottom mr-[0.26em] last:mr-0">
+                  <motion.span
+                    className="inline-block"
+                    {...(shouldReduceMotion
+                      ? {}
+                      : {
+                          initial: { opacity: 0, y: '100%' },
+                          animate: { opacity: 1, y: 0 },
+                          transition: {
+                            duration: 0.3,
+                            delay: 0.04 + idx * 0.07,
+                            ease: MOMENTUM_EASE,
+                          },
+                        })}
+                  >
+                    {phrase}
+                  </motion.span>
+                </span>
+              ))}
+            </h1>
 
             <motion.p
-              {...fadeUp(0.1)}
+              {...fadeUp(0.2)}
               className="text-base sm:text-lg text-slate-100 leading-relaxed max-w-2xl mx-auto"
             >
-              RCCG Jesus Covenant Zone&apos;s church management system turns Sunday check-ins into real pastoral care—recording sanctuary attendance accurately, alerting workers when a member or first-timer needs a call, and celebrating every youth birthday on time.
+              Take Sunday attendance in seconds, notice when a member or first-timer needs a check-in call, and celebrate every youth birthday on time.
             </motion.p>
 
-            <motion.div {...fadeUp(0.16)} className="pt-2 flex justify-center">
+            <motion.div {...fadeUp(0.24)} className="pt-2 flex justify-center">
               <motion.div {...(shouldReduceMotion ? {} : tactileTapProps)}>
                 <Link
                   href="/checkin"
@@ -159,15 +217,19 @@ export default function LandingPage() {
             </motion.div>
 
             <motion.div
-              {...fadeUp(0.22)}
+              {...fadeUp(0.28)}
               className="grid grid-cols-3 gap-4 pt-6 border-t border-white/20 max-w-xl mx-auto text-white"
             >
               <div>
-                <span className="block text-xl sm:text-2xl font-extrabold">150m</span>
+                <span className="block text-xl sm:text-2xl font-extrabold">
+                  <AnimatedDigit target={150} suffix="m" delay={0.28} />
+                </span>
                 <span className="text-xs font-medium text-slate-200">Sanctuary geofence</span>
               </div>
               <div>
-                <span className="block text-xl sm:text-2xl font-extrabold">4-Digit</span>
+                <span className="block text-xl sm:text-2xl font-extrabold">
+                  <AnimatedDigit target={4} suffix="-Digit" delay={0.34} />
+                </span>
                 <span className="text-xs font-medium text-slate-200">Phone check-in</span>
               </div>
               <div>
@@ -236,7 +298,7 @@ export default function LandingPage() {
                 Follow-up and birthdays built into every Sunday
               </h2>
               <p className="text-base text-slate-700 leading-relaxed">
-                Attendance records automatically feed pastoral care—helping workers reach out early and celebrate members consistently.
+                Attendance records connect directly to pastoral care, so workers can reach out early and celebrate members consistently.
               </p>
             </motion.div>
 
@@ -292,7 +354,7 @@ export default function LandingPage() {
                     Never miss a youth birthday celebration
                   </h3>
                   <p className="text-sm text-slate-700 leading-relaxed">
-                    Tracks upcoming birthdays for tomorrow, the next 7 days, and the coming month—paired with automated Telegram reminders so the media and care teams celebrate every member on time.
+                    Tracks upcoming birthdays for tomorrow, the next 7 days, and the coming month so the media and care teams can prepare flyers and celebrate every member on time.
                   </p>
                 </div>
               </motion.div>
@@ -315,7 +377,7 @@ export default function LandingPage() {
                   Weekly Fellowship Times
                 </h2>
                 <p className="text-xs italic text-slate-500 mt-1">
-                  &ldquo;Let us not neglect meeting together...&rdquo; &mdash; Hebrews 10:25
+                  &ldquo;Let us not neglect meeting together...&rdquo; (Hebrews 10:25)
                 </p>
               </div>
               <div className="flex items-center gap-3 self-start sm:self-center">
@@ -335,9 +397,21 @@ export default function LandingPage() {
             </div>
 
             <div className="divide-y divide-slate-200">
-              {WEEKLY_SCHEDULE.map((row) => (
-                <div
+              {WEEKLY_SCHEDULE.map((row, idx) => (
+                <motion.div
                   key={row.service}
+                  {...(shouldReduceMotion
+                    ? {}
+                    : {
+                        initial: { opacity: 0, y: 8 },
+                        whileInView: { opacity: 1, y: 0 },
+                        viewport: { once: true, amount: 0.2 },
+                        transition: {
+                          duration: 0.22,
+                          delay: idx * 0.035,
+                          ease: MOMENTUM_EASE,
+                        },
+                      })}
                   className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                 >
                   <div>
@@ -354,7 +428,7 @@ export default function LandingPage() {
                   <span className="text-xs font-mono font-bold text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg self-start sm:self-center shrink-0">
                     {row.time}
                   </span>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>

@@ -1,7 +1,9 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { isWithinChurchGeofence } from '@/lib/geo';
+import { sanitizeText } from '@/lib/utils';
 import {
   getActiveChurchService,
   getNigerianDateMidnight,
@@ -10,6 +12,32 @@ import {
 } from '@/lib/service-resolver';
 import { CheckInMethod, PersonCategory, PersonStatus, ServiceSchedule, DayOfWeek } from '@prisma/client';
 import { NextUpcomingService } from '@/lib/service-resolver';
+
+const publicRateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+async function checkPublicRateLimit(bucket: string, maxRequests: number, windowMs = 60_000): Promise<boolean> {
+  try {
+    const h = await headers();
+    const ip =
+      h.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      h.get('x-real-ip')?.trim() ||
+      'unknown';
+    const key = `${bucket}:${ip}`;
+    const now = Date.now();
+    const entry = publicRateLimitMap.get(key);
+    if (!entry || now > entry.resetAt) {
+      publicRateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
+      return true;
+    }
+    if (entry.count >= maxRequests) {
+      return false;
+    }
+    entry.count += 1;
+    return true;
+  } catch {
+    return true;
+  }
+}
 
 export type ActiveServiceResponse =
   | {
@@ -114,6 +142,11 @@ export async function getActiveServiceAction(overrideTime?: string): Promise<Act
  */
 export async function lookupByPhoneSuffix(phoneSuffix: string) {
   try {
+    const allowed = await checkPublicRateLimit('lookup', 30, 60_000);
+    if (!allowed) {
+      return { success: false, error: 'Too many lookup requests. Please wait a minute.', count: 0, members: [] };
+    }
+
     const cleanDigits = (phoneSuffix || '').replace(/\D/g, '');
     if (cleanDigits.length !== 4) {
       return { success: false, error: 'Please enter exactly 4 digits.', count: 0, members: [] };
@@ -137,14 +170,13 @@ export async function lookupByPhoneSuffix(phoneSuffix: string) {
         id: true,
         firstName: true,
         lastName: true,
-        phone: true,
         phoneLast4: true,
         category: true,
         subCategory: true,
         status: true,
-        photoUrl: true,
       },
       orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+      take: 25,
     });
 
     return {
@@ -166,22 +198,21 @@ export const lookupMemberByLast4Action = lookupByPhoneSuffix;
  */
 export async function lookupMemberByIdAction(personId: string) {
   try {
-    if (!personId) {
+    const cleanId = sanitizeText(personId, 64);
+    if (!cleanId) {
       return { success: false, error: 'Invalid member ID.' };
     }
 
     const member = await prisma.person.findUnique({
-      where: { id: personId },
+      where: { id: cleanId },
       select: {
         id: true,
         firstName: true,
         lastName: true,
-        phone: true,
         phoneLast4: true,
         category: true,
         subCategory: true,
         status: true,
-        photoUrl: true,
       },
     });
 
@@ -472,13 +503,18 @@ export async function registerFirstTimerAction({
   userLongitude?: number;
 }): Promise<RegisterFirstTimerResult> {
   try {
+    const allowed = await checkPublicRateLimit('first_timer', 10, 60_000);
+    if (!allowed) {
+      return { success: false, error: 'Too many requests. Please wait a minute before trying again.' };
+    }
+
     const church = await prisma.church.findFirst();
     if (!church) {
       return { success: false, error: 'Church not found.' };
     }
 
-    const cleanFirstName = (firstName || '').trim();
-    const cleanLastName = (lastName || '').trim();
+    const cleanFirstName = sanitizeText(firstName, 60);
+    const cleanLastName = sanitizeText(lastName, 60);
     if (!cleanFirstName) {
       return { success: false, error: 'Please enter your first name.' };
     }
@@ -488,7 +524,32 @@ export async function registerFirstTimerAction({
     if (cleanPhone.length < 10) {
       return { success: false, error: 'Please enter a valid Nigerian phone number (at least 10 digits).' };
     }
+    if (cleanPhone.length > 15) {
+      return { success: false, error: 'Phone number is too long (maximum 15 digits).' };
+    }
     const phoneLast4 = cleanPhone.slice(-4);
+
+    // Enforce sanctuary geofence BEFORE creating any DB record (prevents remote bot DB flooding)
+    if (userLatitude === undefined || userLongitude === undefined) {
+      return {
+        success: false,
+        error: 'Location permission is required to confirm you are on church premises.',
+      };
+    }
+
+    const geoCheck = isWithinChurchGeofence(
+      { latitude: userLatitude, longitude: userLongitude },
+      { latitude: church.latitude, longitude: church.longitude },
+      church.geofenceRadius || 150
+    );
+
+    if (!geoCheck.isAllowed) {
+      return {
+        success: false,
+        error: `Check-in rejected: You are ${geoCheck.distanceMeters}m away from church premises. Must be within ${church.geofenceRadius || 150}m.`,
+        distanceMeters: geoCheck.distanceMeters,
+      };
+    }
 
     // Check if this phone already exists
     let person = await prisma.person.findFirst({

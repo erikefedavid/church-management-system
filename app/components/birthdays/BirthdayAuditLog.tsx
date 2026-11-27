@@ -18,7 +18,7 @@ export default function BirthdayAuditLog({ logs, totalCount }: BirthdayAuditLogP
         </div>
         <h3 className="text-sm font-bold text-slate-900 mb-1">No Broadcast Records Yet</h3>
         <p className="text-xs text-slate-700 max-w-sm mx-auto font-medium">
-          Automated birthday alerts and Telegram dispatches will appear here once executed.
+          Birthday alerts and flyer dispatches will appear here once recorded.
         </p>
       </div>
     );

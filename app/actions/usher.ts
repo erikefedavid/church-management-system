@@ -367,9 +367,12 @@ export async function usherUpdatePhoneAction({
       return { success: false, error: auth.error || 'Unauthorized staff access.' };
     }
 
-    const cleanPhone = newPhone.trim().replace(/\s+/g, '');
+    const cleanPhone = (newPhone || '').trim().replace(/\D/g, '');
     if (cleanPhone.length < 7) {
       return { success: false, error: 'Invalid phone number.' };
+    }
+    if (cleanPhone.length > 11) {
+      return { success: false, error: 'Phone number cannot be more than 11 digits.' };
     }
 
     const phoneLast4 = cleanPhone.slice(-4);
@@ -479,12 +482,15 @@ export async function usherRegisterPersonAction({
       return { success: false, error: 'First name is required.' };
     }
 
-    let cleanPhone = (phone || '').trim().replace(/\s+/g, '');
+    let cleanPhone = (phone || '').trim().replace(/\D/g, '');
     let phoneLast4 = 'NONE';
 
     if (cleanPhone.length > 0) {
       if (cleanPhone.length < 7) {
         return { success: false, error: 'Please enter a valid phone number (or leave empty if no phone).' };
+      }
+      if (cleanPhone.length > 11) {
+        return { success: false, error: 'Phone number cannot be more than 11 digits.' };
       }
       phoneLast4 = cleanPhone.slice(-4);
     } else {

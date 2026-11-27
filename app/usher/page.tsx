@@ -1281,9 +1281,11 @@ export default function UsherHelpDesk() {
                   </label>
                   <input
                     type="tel"
+                    inputMode="numeric"
+                    maxLength={11}
                     required
                     value={newPhoneNumber}
-                    onChange={(e) => setNewPhoneNumber(e.target.value)}
+                    onChange={(e) => setNewPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
                     placeholder="e.g. 08023456789"
                     className="w-full min-h-[44px] bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                   />
@@ -1366,10 +1368,12 @@ export default function UsherHelpDesk() {
                   </div>
                   <input
                     type="tel"
+                    inputMode="numeric"
+                    maxLength={11}
                     value={newPhone}
-                    onChange={(e) => setNewPhone(e.target.value)}
+                    onChange={(e) => setNewPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
                     placeholder="e.g. 08023456789 (or leave blank)"
-                    className="w-full min-h-[44px] bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full min-h-[44px] bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                   />
                 </div>
 
@@ -1426,7 +1430,7 @@ export default function UsherHelpDesk() {
         {/* Strategic Bible Verse Footer */}
         <footer className="pt-4 pb-6 text-center">
           <p className="text-xs text-slate-500 italic">
-            &ldquo;I would rather be a doorkeeper in the house of my God...&rdquo; &mdash; Psalm 84:10
+            &ldquo;I would rather be a doorkeeper in the house of my God...&rdquo; (Psalm 84:10)
           </p>
         </footer>
       </main>
