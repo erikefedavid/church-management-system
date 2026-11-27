@@ -60,16 +60,12 @@ const HERO_SLIDES = [
     alt: 'Youth members lifting hands in worship inside the RCCG Jesus Covenant Zone sanctuary',
   },
   {
-    src: '/images/hero-slide-2.png',
-    alt: 'Young worship leader ministering from the podium at RCCG Jesus Covenant Zone',
+    src: '/images/sanctuary-hero.jpg',
+    alt: 'Youth fellowship worshipping together inside the sanctuary',
   },
   {
-    src: '/images/hero-slide-3.png',
-    alt: 'Youth member praying by the sanctuary window before service',
-  },
-  {
-    src: '/images/hero-slide-4.png',
-    alt: 'Youth chorister leading praise in the sanctuary',
+    src: '/images/youth-worship.jpg',
+    alt: 'Youth congregation lifting hands in praise during service',
   },
 ];
 
@@ -372,11 +368,11 @@ export default function LandingPage() {
               >
                 <div className="group relative aspect-[16/10] w-full bg-slate-100 overflow-hidden">
                   <Image
-                    src="/images/followup-call.png"
-                    alt="Church worker connecting warmly with a member after service"
+                    src="/images/followup-call.jpg"
+                    alt="Follow-up team member calling and checking in on a youth member"
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-cover object-top transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+                    className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
                   />
                 </div>
                 <div className="p-6 sm:p-8 space-y-4 flex-1">
@@ -400,11 +396,11 @@ export default function LandingPage() {
               >
                 <div className="group relative aspect-[16/10] w-full bg-slate-100 overflow-hidden">
                   <Image
-                    src="/images/birthday-care.png"
-                    alt="RCCG Jesus Covenant Zone congregation celebrating a birthday with cake"
+                    src="/images/followup-care.jpg"
+                    alt="Youth fellowship celebrating a member birthday together"
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-cover object-center transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+                    className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
                   />
                 </div>
                 <div className="p-6 sm:p-8 space-y-4 flex-1">
