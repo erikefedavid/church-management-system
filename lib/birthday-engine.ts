@@ -21,7 +21,6 @@ import { prisma } from './prisma';
 import { getNigerianTimeInfo } from './service-resolver';
 import { renderTemplate, formatBirthdayDate } from './template-engine';
 import { dispatchDirectMessage, generateWaMeLink, normalizePhoneNumber } from './direct-dispatch';
-import { sendMediaBirthdayAlert } from './telegram';
 
 export const BIRTHDAY_REMINDER_TYPES = {
   T_MINUS_1_MEDIA: 'GRAPHICS_T_MINUS_1',
@@ -399,45 +398,14 @@ async function internalRunBirthdayPipeline(
         continue;
       }
 
-      // Dispatch Telegram Media Alert
-      const alertResult = await sendMediaBirthdayAlert(
-        {
-          celebrantId: celebrant.personId,
-          celebrantName: celebrant.fullName,
-          department: celebrant.department,
-          birthDateFormatted: celebrant.birthDateFormatted,
-          phone: celebrant.phone,
-          photoUrl: celebrant.photoUrl,
-          daysUntilBirthday: 1,
-          isTomorrow: true,
-        },
-        { dryRun }
-      );
-
-      if (!alertResult.success) {
-        tMinus1Failed++;
-        errors.push({
-          personId: celebrant.personId,
-          type: 'T_MINUS_1_MEDIA_TELEGRAM',
-          error: alertResult.error || 'Telegram dispatch failed',
-        });
-        tMinus1Details.push({
-          personId: celebrant.personId,
-          name: celebrant.fullName,
-          status: 'FAILED',
-          error: alertResult.error,
-        });
-        continue;
-      }
-
-      // Record dispatch log with race-condition catch
+      // Record T-1 flyer prep dispatch log with race-condition catch
       try {
         await prisma.birthdayReminderLog.create({
           data: {
             personId: celebrant.personId,
             year: currentYear,
             type: BIRTHDAY_REMINDER_TYPES.T_MINUS_1_MEDIA,
-            status: alertResult.dryRun ? 'SENT' : 'SENT',
+            status: 'SENT',
           },
         });
         logsCreated++;
@@ -453,7 +421,7 @@ async function internalRunBirthdayPipeline(
       tMinus1Details.push({
         personId: celebrant.personId,
         name: celebrant.fullName,
-        status: alertResult.dryRun ? 'DRY_RUN_SIMULATED' : 'DISPATCHED',
+        status: dryRun ? 'DRY_RUN_SIMULATED' : 'DISPATCHED',
       });
     } catch (err: unknown) {
       tMinus1Failed++;
@@ -504,36 +472,13 @@ async function internalRunBirthdayPipeline(
         continue;
       }
 
-      // 2A. Telegram Day-Of Broadcast Alert
-      const alertResult = await sendMediaBirthdayAlert(
-        {
-          celebrantId: celebrant.personId,
-          celebrantName: celebrant.fullName,
-          department: celebrant.department,
-          birthDateFormatted: celebrant.birthDateFormatted,
-          phone: celebrant.phone,
-          photoUrl: celebrant.photoUrl,
-          daysUntilBirthday: 0,
-          isToday: true,
-        },
-        { dryRun }
-      );
-
-      if (alertResult.success) {
-        dayOfSent++;
-        dayOfDetails.push({
-          personId: celebrant.personId,
-          name: celebrant.fullName,
-          status: alertResult.dryRun ? 'DRY_RUN_SIMULATED' : 'DISPATCHED',
-        });
-      } else {
-        dayOfFailed++;
-        errors.push({
-          personId: celebrant.personId,
-          type: 'DAY_OF_TELEGRAM',
-          error: alertResult.error || 'Day-of broadcast failed',
-        });
-      }
+      // 2A. Day-Of Celebration Status
+      dayOfSent++;
+      dayOfDetails.push({
+        personId: celebrant.personId,
+        name: celebrant.fullName,
+        status: dryRun ? 'DRY_RUN_SIMULATED' : 'DISPATCHED',
+      });
 
       // 2B. Direct Member DM (WhatsApp/SMS with wa.me fallback)
       const renderedGreeting = renderTemplate('BIRTHDAY_DAY_OF_DM', {

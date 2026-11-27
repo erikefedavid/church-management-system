@@ -5,7 +5,6 @@ import { prisma } from '@/lib/prisma';
 import { getNigerianTimeInfo } from '@/lib/service-resolver';
 import { renderTemplate, formatBirthdayDate } from '@/lib/template-engine';
 import { dispatchDirectMessage, generateWaMeLink, normalizePhoneNumber } from '@/lib/direct-dispatch';
-import { sendMediaBirthdayAlert } from '@/lib/telegram';
 import { runBirthdayPipeline, calculateDaysUntilBirthday } from '@/lib/birthday-engine';
 import { requireStaffSession } from './auth';
 
@@ -421,31 +420,6 @@ export async function dispatchManualBirthdayAlertAction(params: {
     const birthDateFormatted = formatBirthdayDate(person.birthMonth, person.birthDay);
 
     if (params.type === 'T_MINUS_1_MEDIA') {
-      let bMonth = person.birthMonth;
-      let bDay = person.birthDay;
-      if ((!bMonth || !bDay) && person.dateOfBirth) {
-        const dob = new Date(person.dateOfBirth);
-        bMonth = dob.getUTCMonth() + 1;
-        bDay = dob.getUTCDate();
-      }
-
-      const daysUntil =
-        bMonth && bDay
-          ? calculateDaysUntilBirthday(bMonth, bDay, ngTime.month, ngTime.dayOfMonth, ngTime.year)
-          : 1;
-
-      const telegramResult = await sendMediaBirthdayAlert({
-        celebrantId: person.id,
-        celebrantName: `${person.firstName} ${person.lastName}`.trim(),
-        department: dept,
-        birthDateFormatted,
-        phone: person.phone,
-        photoUrl: person.photoUrl,
-        daysUntilBirthday: daysUntil,
-        isTomorrow: daysUntil === 1,
-        isToday: daysUntil === 0,
-      });
-
       await prisma.birthdayReminderLog.upsert({
         where: {
           personId_year_type: {
@@ -468,10 +442,8 @@ export async function dispatchManualBirthdayAlertAction(params: {
 
       revalidatePath('/birthdays');
       return {
-        success: telegramResult.success,
-        message: telegramResult.dryRun
-          ? `[Dry-run] Media flyer alert simulated for ${person.firstName}.`
-          : `Media flyer alert sent to Telegram bot for ${person.firstName}.`,
+        success: true,
+        message: `Media flyer prep logged for ${person.firstName}.`,
       };
     }
 
@@ -524,17 +496,6 @@ export async function dispatchManualBirthdayAlertAction(params: {
     }
 
     if (params.type === 'DAY_OF_CELEBRATION') {
-      const telegramResult = await sendMediaBirthdayAlert({
-        celebrantId: person.id,
-        celebrantName: `${person.firstName} ${person.lastName}`.trim(),
-        department: dept,
-        birthDateFormatted,
-        phone: person.phone,
-        photoUrl: person.photoUrl,
-        daysUntilBirthday: 0,
-        isToday: true,
-      });
-
       await prisma.birthdayReminderLog.upsert({
         where: {
           personId_year_type: {
@@ -557,10 +518,8 @@ export async function dispatchManualBirthdayAlertAction(params: {
 
       revalidatePath('/birthdays');
       return {
-        success: telegramResult.success,
-        message: telegramResult.dryRun
-          ? `[Dry-run] Day-of celebration alert simulated for ${person.firstName}.`
-          : `Day-of celebration alert sent to Telegram bot for ${person.firstName}.`,
+        success: true,
+        message: `Day-of celebration logged for ${person.firstName}.`,
       };
     }
 

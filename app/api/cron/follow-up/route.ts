@@ -101,7 +101,6 @@ async function handleFollowUpCron(request: NextRequest): Promise<NextResponse> {
           tasksUpdated: syncResult.updatedCount,
           skippedDuplicate: syncResult.skippedDuplicate,
           skippedCooldown: syncResult.skippedCooldown,
-          telegramNotification: syncResult.telegramNotification,
         },
         escalations: {
           tasksEscalated: escalationResult.escalatedCount,

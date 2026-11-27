@@ -9,18 +9,6 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));
 
-vi.mock('@/lib/telegram', () => ({
-  sendMediaBirthdayAlert: vi.fn().mockResolvedValue({
-    success: true,
-    messageId: 'mock-msg-123',
-    status: 'DELIVERED',
-  }),
-  sendTelegramMessage: vi.fn().mockResolvedValue({
-    success: true,
-    messageId: 'mock-msg-123',
-  }),
-}));
-
 import {
   getBirthdayDashboardAction,
   triggerBirthdayCronAction,

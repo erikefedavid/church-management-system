@@ -20,7 +20,6 @@ import {
   mapReasonToTemplateCategory,
 } from './absence-radar';
 import { renderTemplate } from './template-engine';
-import { sendTelegramMessage, escapeMarkdown } from './telegram';
 
 export type MandatedOutcome =
   | 'Contacted (WhatsApp)'
@@ -41,7 +40,6 @@ export interface TaskSyncOptions {
   churchId?: string;
   refDate?: Date;
   cooldownHours?: number; // Default 144 hours (6 days)
-  notifyTelegram?: boolean; // Default true when new tasks are created (dry-run safe)
 }
 
 export interface TaskSyncResult {
@@ -50,12 +48,6 @@ export interface TaskSyncResult {
   skippedDuplicate: number;
   skippedCooldown: number;
   radarResult: AbsenceRadarScanResult;
-  telegramNotification?: {
-    attempted: boolean;
-    sent: boolean;
-    dryRun?: boolean;
-    error?: string;
-  };
 }
 
 export interface AutoEscalationResult {
@@ -227,71 +219,12 @@ async function internalSyncFollowUpTasks(options: TaskSyncOptions = {}): Promise
     newlyCreatedMembers.push(member);
   }
 
-  let telegramNotification: TaskSyncResult['telegramNotification'] = {
-    attempted: false,
-    sent: false,
-  };
-
-  if (options.notifyTelegram !== false && newlyCreatedMembers.length > 0) {
-    try {
-      const firstTimers = newlyCreatedMembers.filter((m) => m.reason === 'FIRST_TIMER');
-      const missed1 = newlyCreatedMembers.filter((m) => m.reason === 'MISSED_1_WEEK');
-      const missed2 = newlyCreatedMembers.filter((m) => m.reason === 'MISSED_2_WEEKS');
-
-      const lines: string[] = [
-        `📋 *YOUTH FOLLOW-UP RADAR — ${newlyCreatedMembers.length} NEW ALERT${newlyCreatedMembers.length > 1 ? 'S' : ''}*`,
-        '',
-      ];
-      if (firstTimers.length > 0) {
-        lines.push(`✨ *First-Timers (72h Care):* ${firstTimers.length}`);
-      }
-      if (missed1.length > 0) {
-        lines.push(`👋 *Missed 1 Sunday:* ${missed1.length}`);
-      }
-      if (missed2.length > 0) {
-        lines.push(`⚠️ *Missed 2 Sundays:* ${missed2.length}`);
-      }
-
-      const previewMembers = newlyCreatedMembers.slice(0, 8);
-      lines.push('', '*Members to reach out to:*');
-      for (const m of previewMembers) {
-        const tag =
-          m.reason === 'FIRST_TIMER'
-            ? 'First-Timer'
-            : m.reason === 'MISSED_2_WEEKS'
-            ? 'Missed 2 wks'
-            : 'Missed 1 wk';
-        lines.push(`• ${escapeMarkdown(m.fullName)} (${tag}) — ${escapeMarkdown(m.formattedPhone)}`);
-      }
-      if (newlyCreatedMembers.length > previewMembers.length) {
-        lines.push(`_...and ${newlyCreatedMembers.length - previewMembers.length} more on /followup_`);
-      }
-
-      lines.push('', '📲 Open */followup* for 1-click WhatsApp & Call outreach (Youth President & Team).');
-
-      const tgRes = await sendTelegramMessage(lines.join('\n'));
-      telegramNotification = {
-        attempted: true,
-        sent: tgRes.success,
-        dryRun: tgRes.dryRun,
-        error: tgRes.error,
-      };
-    } catch (tgErr) {
-      telegramNotification = {
-        attempted: true,
-        sent: false,
-        error: tgErr instanceof Error ? tgErr.message : 'Telegram notification failed',
-      };
-    }
-  }
-
   return {
     createdCount,
     updatedCount,
     skippedDuplicate,
     skippedCooldown,
     radarResult,
-    telegramNotification,
   };
 }
 

@@ -61,9 +61,6 @@ import {
   isLeapYear,
   BIRTHDAY_REMINDER_TYPES,
 } from '@/lib/birthday-engine';
-import {
-  formatBirthdayAlertMarkdown,
-} from '@/lib/telegram';
 import { POST as postFollowUpCron } from '@/app/api/cron/follow-up/route';
 import { POST as postBirthdayCron } from '@/app/api/cron/birthdays/route';
 import { NextRequest } from 'next/server';
@@ -594,21 +591,19 @@ describe('Milestone 5: Comprehensive E2E Cross-Feature Integration Suite', () =>
       expect(calculateDaysUntilBirthday(2, 29, 2, 27, 2026)).toBe(1);
     });
 
-    it('4.2: T-1 Telegram alert formats formatted Markdown message with photoUrl for media flyer prep', () => {
-      const alertMarkdown = formatBirthdayAlertMarkdown({
-        celebrantName: `${memberTunde.firstName} ${memberTunde.lastName}`,
+    it('4.2: Birthday WhatsApp greeting renders personalized 0-token template with wa.me link', () => {
+      const greeting = renderTemplate('BIRTHDAY_DAY_OF_DM', {
+        firstName: memberTunde.firstName,
+        lastName: memberTunde.lastName,
+        fullName: `${memberTunde.firstName} ${memberTunde.lastName}`,
         department: memberTunde.subCategory,
         category: memberTunde.category,
         birthDateFormatted: 'November 15',
-        photoUrl: memberTunde.photoUrl,
-        daysUntilBirthday: 1,
       });
+      const waMeUrl = generateWaMeLink(normalizePhoneNumber(memberTunde.phone).digitsOnly, greeting.text);
 
-      expect(alertMarkdown).toContain('Tunde Adeyemi');
-      expect(alertMarkdown).toContain('Choir');
-      expect(alertMarkdown).toContain('November 15');
-      expect(alertMarkdown).toContain(memberTunde.photoUrl);
-      expect(alertMarkdown).toContain('FLYER NOTICE');
+      expect(greeting.text).toContain('Tunde');
+      expect(waMeUrl).toContain('https://wa.me/234');
     });
 
     it('4.3: Birthday pipeline executes end-to-end and strictly enforces database idempotency', async () => {
