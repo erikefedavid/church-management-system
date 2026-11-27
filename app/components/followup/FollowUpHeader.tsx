@@ -41,13 +41,13 @@ export default function FollowUpHeader({
               priority
             />
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
                 The Redeemed Christian Church of God
               </span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                <Clock className="w-2.5 h-2.5" />
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <Clock className="w-3 h-3 shrink-0" />
                 {watTimeFormatted}
               </span>
             </div>
@@ -61,12 +61,12 @@ export default function FollowUpHeader({
         </div>
 
         {/* Volunteer Identity & Actions */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 w-full md:w-auto">
           {/* Volunteer Caller Name Input */}
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-blue-600 focus-within:bg-white transition-all min-h-[44px]">
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-blue-600 focus-within:bg-white transition-all min-h-[44px] w-full sm:w-auto">
             <UserCheck className="w-4 h-4 text-slate-600 shrink-0" />
-            <div className="flex flex-col">
-              <label htmlFor="caller-name-input" className="text-[9px] font-bold uppercase tracking-wider text-slate-600">
+            <div className="flex flex-col flex-1 min-w-0">
+              <label htmlFor="caller-name-input" className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
                 Active Caller
               </label>
               <input
@@ -75,34 +75,37 @@ export default function FollowUpHeader({
                 value={callerName}
                 onChange={(e) => onCallerNameChange(e.target.value)}
                 placeholder="Your Name (e.g. Daniel)"
-                className="bg-transparent text-xs font-bold text-slate-950 placeholder:text-slate-600 focus:outline-hidden min-w-[130px]"
+                className="w-full bg-transparent text-sm sm:text-xs font-bold text-slate-950 placeholder:text-slate-600 focus:outline-hidden sm:min-w-[130px]"
               />
             </div>
           </div>
 
-          {/* Search Input */}
-          <div className="relative flex-1 sm:flex-none sm:w-56">
-            <Search className="w-4 h-4 text-slate-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search member, phone..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs font-medium text-slate-950 placeholder:text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-hidden min-h-[44px]"
-            />
-          </div>
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-0 sm:flex-none sm:w-56">
+              <Search className="w-4 h-4 text-slate-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Search member, phone..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm sm:text-xs font-medium text-slate-950 placeholder:text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-hidden min-h-[44px]"
+              />
+            </div>
 
-          {/* Refresh & Sync Button */}
-          <motion.button
-            {...tactileTapProps}
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-blue-950 hover:bg-slate-900 text-white text-xs font-bold shadow-xs disabled:opacity-60 min-h-[44px]"
-            title="Scan attendance & refresh follow-up queue"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">{isRefreshing ? 'Scanning...' : 'Refresh'}</span>
-          </motion.button>
+            {/* Refresh & Sync Button */}
+            <motion.button
+              {...tactileTapProps}
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-blue-950 hover:bg-slate-900 text-white text-xs font-bold shadow-xs disabled:opacity-60 min-h-[44px] min-w-[44px] shrink-0"
+              title="Scan attendance & refresh follow-up queue"
+              aria-label="Refresh follow-up queue"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{isRefreshing ? 'Scanning...' : 'Refresh'}</span>
+            </motion.button>
+          </div>
         </div>
       </div>
     </header>

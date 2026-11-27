@@ -467,31 +467,31 @@ export default function UsherHelpDesk() {
 
       {/* Top Header - DOOR & NAVBAR COUNT REMOVED, HISTORY ICON ADDED */}
       <header className="border-b border-slate-200/80 bg-white/95 backdrop-blur-md sticky top-0 z-40 px-4 py-3 shadow-xs">
-        <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="relative w-8 h-8 shrink-0">
+        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="relative w-9 h-9 shrink-0">
               <Image src="/rccg-logo.png" alt="RCCG Logo" fill className="object-contain" priority />
             </div>
-            <div>
-              <h1 className="text-sm font-bold text-slate-900 flex items-center gap-1.5 leading-none">
-                <Shield className="w-4 h-4 text-blue-600" />
-                <span>RCCG Youth Usher Desk</span>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-1.5 leading-tight">
+                <Shield className="w-4 h-4 text-blue-600 shrink-0" />
+                <span className="truncate">RCCG Youth Usher Desk</span>
               </h1>
-              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                Youth Check-In & Attendance Roster
+              <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
+                Youth Check-In &amp; Attendance Roster
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
             {/* FOLLOW-UP & CARE DESK BUTTON ON NAVBAR */}
             <Link
               href="/followup"
-              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2.5 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="min-h-[44px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-3 py-2 rounded-xl shadow-xs transition-all duration-100 active:scale-[0.97] flex items-center gap-1.5 cursor-pointer"
               title="Open Follow-Up & Volunteer Care Desk"
             >
-              <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="hidden sm:inline">Follow-Up</span>
+              <HeartHandshake className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Follow-Up</span>
             </Link>
 
             {/* PAST RECORDS HISTORY BUTTON ON NAVBAR */}
@@ -503,21 +503,21 @@ export default function UsherHelpDesk() {
                   handleSearchHistory();
                 }
               }}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold px-2.5 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="min-h-[44px] bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold px-3 py-2 rounded-xl shadow-xs transition-all duration-100 active:scale-[0.97] flex items-center gap-1.5 cursor-pointer"
               title="View & Download Past Attendance History"
             >
-              <History className="w-3.5 h-3.5 text-blue-600" />
-              <span className="hidden sm:inline">Past Records</span>
+              <History className="w-4 h-4 text-blue-600 shrink-0" />
+              <span>Past Records</span>
             </button>
 
             {/* ADD PERSON BUTTON */}
             <button
               type="button"
               onClick={() => setShowAddPersonModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-xl shadow-xs transition-all duration-100 active:scale-[0.97] flex items-center gap-1.5 cursor-pointer"
             >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Add Person</span>
+              <UserPlus className="w-4 h-4 shrink-0" />
+              <span>Add Person</span>
             </button>
 
             {/* DOWNLOAD ATTENDANCE BUTTON */}
@@ -540,10 +540,10 @@ export default function UsherHelpDesk() {
                   setShowExportModal(true);
                 }
               }}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="min-h-[44px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl shadow-xs transition-all duration-100 active:scale-[0.97] flex items-center gap-1.5 cursor-pointer"
               title="Download Attendance of today's services"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-4 h-4 shrink-0" />
               <span>Download Attendance</span>
             </button>
           </div>
@@ -554,13 +554,13 @@ export default function UsherHelpDesk() {
       <main className="flex-1 max-w-2xl w-full mx-auto p-4 space-y-4 relative z-10">
         {/* Service in Session / Just Finished Alert Banner */}
         {isLiveNow && activeService && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 flex items-center gap-2.5 text-xs">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <div>
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3.5 flex items-start sm:items-center gap-2.5 text-xs">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0 mt-1 sm:mt-0" />
+            <div className="min-w-0">
               <span className="font-bold text-emerald-950 block">
                 {activeService.name} is Currently Active ({formatTimeRange12(activeService.startTime, activeService.endTime)})
               </span>
-              <span className="text-[11px] text-emerald-800">
+              <span className="text-xs text-emerald-800 block mt-0.5">
                 Check-ins are streaming live ({nigerianTimeFormatted}).
               </span>
             </div>
@@ -568,13 +568,13 @@ export default function UsherHelpDesk() {
         )}
 
         {!isLiveNow && justFinishedService && (
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-3 flex items-center gap-2.5 text-xs">
-            <Clock className="w-4 h-4 text-blue-600 shrink-0" />
-            <div>
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-3.5 flex items-start sm:items-center gap-2.5 text-xs">
+            <Clock className="w-4 h-4 text-blue-600 shrink-0 mt-0.5 sm:mt-0" />
+            <div className="min-w-0">
               <span className="font-bold text-blue-950 block">
                 {justFinishedService.name} Concluded ({formatTimeRange12(justFinishedService.startTime, justFinishedService.endTime)})
               </span>
-              <span className="text-[11px] text-blue-800">
+              <span className="text-xs text-blue-800 block mt-0.5">
                 Click &ldquo;Download Attendance&rdquo; to export the finalized report for this service.
               </span>
             </div>
@@ -582,13 +582,13 @@ export default function UsherHelpDesk() {
         )}
 
         {!isLiveNow && !justFinishedService && (
-          <div className="bg-slate-100/90 border border-slate-200 rounded-2xl p-3 flex items-center gap-2.5 text-xs">
-            <Clock className="w-4 h-4 text-slate-500 shrink-0" />
-            <div>
+          <div className="bg-slate-100/90 border border-slate-200 rounded-2xl p-3.5 flex items-start sm:items-center gap-2.5 text-xs">
+            <Clock className="w-4 h-4 text-slate-500 shrink-0 mt-0.5 sm:mt-0" />
+            <div className="min-w-0">
               <span className="font-bold text-slate-800 block">
-                Off-Hours • No Church Service Currently in Session
+                Off-Hours &bull; No Church Service Currently in Session
               </span>
-              <span className="text-[11px] text-slate-500">
+              <span className="text-xs text-slate-500 block mt-0.5">
                 {nextUpcomingService
                   ? `Next Scheduled Service: ${nextUpcomingService.name}`
                   : 'Roster and records are available for administrative review.'}
@@ -601,43 +601,43 @@ export default function UsherHelpDesk() {
         <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3 relative z-30">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             {isLiveNow && activeService ? (
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="flex items-center flex-wrap gap-2 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">Recording Service:</span>
                 <span className="text-sm font-extrabold text-slate-900">{activeService.name}</span>
-                <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-lg ml-1">
+                <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-lg">
                   {formatTimeRange12(activeService.startTime, activeService.endTime)}
                 </span>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-slate-400" />
-                <span className="text-xs font-bold text-slate-700">Off-Hours • Attendance Marking Locked</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                <span className="text-xs font-bold text-slate-700">Off-Hours &bull; Attendance Marking Locked</span>
               </div>
             )}
 
-            <div className="text-right">
-              <span className="text-[11px] text-slate-500 font-medium">
+            <div className="sm:text-right shrink-0">
+              <span className="text-xs text-slate-500 font-medium">
                 {currentDay || 'Live Schedule'}
               </span>
             </div>
           </div>
 
           {/* Toggle between Live Roll Call (A-Z) & Attendance for Today */}
-          <div className="flex rounded-2xl bg-slate-100 p-1 border border-slate-200 text-xs">
+          <div className="flex rounded-2xl bg-slate-100 p-1 border border-slate-200 text-xs gap-1">
             <button
               type="button"
               onClick={() => setActiveTab('ROSTER')}
-              className={`flex-1 py-2.5 font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 min-h-[44px] px-2.5 py-2 font-bold rounded-xl transition-all duration-100 active:scale-[0.97] flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'ROSTER'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Users className="w-3.5 h-3.5" />
-              <span>Mark Attendance (Live Roster)</span>
+              <Users className="w-4 h-4 shrink-0" />
+              <span className="truncate">Live Roster</span>
               {isLiveNow && (
-                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse ml-0.5" />
+                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse shrink-0" />
               )}
             </button>
 
@@ -647,16 +647,16 @@ export default function UsherHelpDesk() {
                 setActiveTab('TODAY_LIST');
                 loadTodayServicesSummary();
               }}
-              className={`flex-1 py-2.5 font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 min-h-[44px] px-2.5 py-2 font-bold rounded-xl transition-all duration-100 active:scale-[0.97] flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'TODAY_LIST'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <ClipboardList className="w-3.5 h-3.5" />
-              <span>Attendance for Today</span>
+              <ClipboardList className="w-4 h-4 shrink-0" />
+              <span className="truncate">Today&apos;s Attendance</span>
               {todayServicesSummary.length > 0 && (
-                <span className="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5">
+                <span className="bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded-full font-bold shrink-0">
                   {todayServicesSummary.filter((s) => s.totalCount > 0).length}
                 </span>
               )}
@@ -668,17 +668,17 @@ export default function UsherHelpDesk() {
         {activeTab === 'ROSTER' && (
           <div className="space-y-3 relative z-10">
             {!isLiveNow ? (
-              <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl p-8 text-center space-y-3 shadow-xs">
+              <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl p-6 sm:p-8 text-center space-y-3 shadow-xs">
                 <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-200">
                   <Clock className="w-7 h-7" />
                 </div>
                 <div className="space-y-1.5 max-w-md mx-auto">
                   <h3 className="text-base font-bold text-slate-900">Attendance Marking is Locked</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
                     No church service is currently live. Ushers can only record attendance when a church service is in session.
                   </p>
-                  <p className="text-[11px] text-slate-400">
-                    Click the <strong className="text-blue-700">Attendance for Today</strong> tab above to review today&apos;s completed roll calls, or tap <strong className="text-slate-700">Past Records</strong> in the top bar to inspect previous dates.
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Tap <strong className="text-blue-700">Today&apos;s Attendance</strong> above to review today&apos;s completed roll calls, or tap <strong className="text-slate-700">Past Records</strong> in the top bar to inspect previous dates.
                   </p>
                 </div>
               </div>
@@ -691,14 +691,15 @@ export default function UsherHelpDesk() {
                     placeholder="Search by name or phone/PIN..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl pl-11 pr-10 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-xs"
+                    className="w-full min-h-[44px] bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl pl-11 pr-12 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-xs"
                   />
-                  <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
+                  <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      aria-label="Clear search"
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -706,7 +707,7 @@ export default function UsherHelpDesk() {
                 </div>
 
                 {/* Sub-header counter */}
-                <div className="flex items-center justify-between text-xs px-1 text-slate-500">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs px-1 text-slate-500">
                   <span>
                     Showing <strong className="text-slate-800">{filteredRoster.length}</strong> members (Alphabetical)
                   </span>
@@ -719,7 +720,7 @@ export default function UsherHelpDesk() {
                 {filteredRoster.length === 0 && (
                   <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-8 text-center space-y-3">
                     <Users className="w-8 h-8 text-slate-300 mx-auto" />
-                    <p className="text-xs text-slate-600">
+                    <p className="text-xs sm:text-sm text-slate-600">
                       No member found matching &quot;<strong className="text-slate-900">{searchQuery}</strong>&quot;.
                     </p>
                     <button
@@ -728,16 +729,16 @@ export default function UsherHelpDesk() {
                         setNewFirstName(searchQuery);
                         setShowAddPersonModal(true);
                       }}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                      className="min-h-[44px] inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all duration-100 active:scale-[0.97] cursor-pointer"
                     >
-                      <UserPlus className="w-3.5 h-3.5" />
+                      <UserPlus className="w-4 h-4" />
                       <span>Add &quot;{searchQuery}&quot; to Database</span>
                     </button>
                   </div>
                 )}
 
                 {/* Roster Cards List */}
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {filteredRoster.map((person) => {
                     const isCheckingIn = checkingInId === person.id;
                     const isCheckedIn = person.isCheckedIn;
@@ -746,43 +747,43 @@ export default function UsherHelpDesk() {
                     return (
                       <div
                         key={person.id}
-                        className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-xs hover:border-slate-300 transition-colors"
+                        className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs hover:border-slate-300 transition-colors"
                       >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-bold text-slate-900">
+                        <div className="min-w-0 flex-1 space-y-1.5">
+                          <div className="flex items-center gap-2 flex-wrap min-w-0">
+                            <span className="text-sm font-bold text-slate-900 truncate max-w-full">
                               {person.firstName} {person.lastName}
                             </span>
 
-                            {/* Demographic Role Tag (Youth Worker, Adult Worker, Youth, Adult) */}
+                            {/* Demographic Role Tag */}
                             <span
-                              className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${roleBadge.color}`}
+                              className={`text-xs px-2.5 py-0.5 rounded-full font-bold border shrink-0 ${roleBadge.color}`}
                             >
                               {roleBadge.label}
                             </span>
 
                             {/* First-Timer Indicator */}
                             {person.status === 'FIRST_TIMER' && (
-                              <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
-                                <Sparkles className="w-2.5 h-2.5" />
+                              <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0">
+                                <Sparkles className="w-3 h-3" />
                                 <span>1st Timer</span>
                               </span>
                             )}
                           </div>
 
                           {/* Phone or No-Phone indicator */}
-                          <div className="text-xs text-slate-500 flex items-center gap-2">
+                          <div className="text-xs text-slate-500 flex items-center flex-wrap gap-x-2 gap-y-1">
                             {person.phone && person.phone !== 'NO-PHONE' ? (
                               <>
-                                <span>{person.phone}</span>
-                                <span>•</span>
+                                <span className="truncate">{person.phone}</span>
+                                <span>&bull;</span>
                                 <span className="font-mono text-blue-700 font-semibold">
                                   PIN: {person.phoneLast4}
                                 </span>
                               </>
                             ) : (
                               <span className="text-slate-400 italic flex items-center gap-1">
-                                <PhoneOff className="w-3 h-3 text-slate-300" />
+                                <PhoneOff className="w-3.5 h-3.5 text-slate-300 shrink-0" />
                                 <span>No phone registered</span>
                               </span>
                             )}
@@ -790,22 +791,23 @@ export default function UsherHelpDesk() {
                         </div>
 
                         {/* Actions: Edit Phone & Check-In */}
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex items-center justify-between sm:justify-end gap-2 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
                           <button
                             type="button"
                             onClick={() => {
                               setEditingPerson(person);
                               setNewPhoneNumber(person.phone === 'NO-PHONE' ? '' : person.phone);
                             }}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors cursor-pointer"
+                            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-100 active:scale-[0.97] cursor-pointer"
                             title="Update Phone Number"
+                            aria-label="Update Phone Number"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
 
                           {isCheckedIn ? (
-                            <div className="px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 shadow-2xs">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <div className="min-h-[44px] px-3.5 py-2 text-xs font-bold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center gap-1.5 shadow-2xs flex-1 sm:flex-initial">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                               <span>Present ({person.checkInTime || 'Checked In'})</span>
                             </div>
                           ) : (
@@ -813,9 +815,9 @@ export default function UsherHelpDesk() {
                               type="button"
                               disabled={isCheckingIn}
                               onClick={() => handleUsherCheckIn(person)}
-                              className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              className="min-h-[44px] px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all duration-100 active:scale-[0.97] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 flex-1 sm:flex-initial"
                             >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <CheckCircle2 className="w-4 h-4 shrink-0" />
                               <span>{isCheckingIn ? 'Marking...' : 'Mark Present'}</span>
                             </button>
                           )}
@@ -832,12 +834,12 @@ export default function UsherHelpDesk() {
         {/* TAB 2: ATTENDANCE FOR TODAY (COMPLETED & ACTIVE SERVICES FOR THE DAY) */}
         {activeTab === 'TODAY_LIST' && (
           <div className="space-y-4 relative z-10">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <ClipboardList className="w-4 h-4 text-blue-600" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <span className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                <ClipboardList className="w-4 h-4 text-blue-600 shrink-0" />
                 <span>Attendance Records for Today ({currentDay || 'Today'})</span>
               </span>
-              <span className="text-[11px] text-slate-500 font-medium">
+              <span className="text-xs text-slate-500 font-medium">
                 Resets at midnight &bull; Auto-saved to History
               </span>
             </div>
@@ -845,10 +847,10 @@ export default function UsherHelpDesk() {
             {todayServicesSummary.length === 0 ? (
               <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-8 text-center space-y-2">
                 <ClipboardList className="w-8 h-8 text-slate-300 mx-auto" />
-                <p className="text-xs font-semibold text-slate-700">
+                <p className="text-xs sm:text-sm font-semibold text-slate-700">
                   No attendance recorded for today yet.
                 </p>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-xs text-slate-500">
                   As each service begins and concludes, its attendance records and class breakdowns will display here.
                 </p>
               </div>
@@ -864,12 +866,12 @@ export default function UsherHelpDesk() {
                       className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3 transition-all"
                     >
                       {/* Top Header of Service Card */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                        <div className="space-y-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div className="min-w-0 space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-bold text-slate-900">{svc.name}</span>
+                            <span className="text-sm font-bold text-slate-900 truncate">{svc.name}</span>
                             <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              className={`text-xs font-bold px-2.5 py-0.5 rounded-full border shrink-0 ${
                                 svc.status === 'LIVE'
                                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse'
                                   : svc.status === 'CONCLUDED'
@@ -878,20 +880,20 @@ export default function UsherHelpDesk() {
                               }`}
                             >
                               {svc.status === 'LIVE'
-                                ? '● Live Service'
+                                ? 'Live Service'
                                 : svc.status === 'CONCLUDED'
-                                ? '✓ Concluded'
-                                : '⏳ Upcoming'}
+                                ? 'Concluded'
+                                : 'Upcoming'}
                             </span>
                           </div>
-                          <span className="text-[11px] font-mono text-slate-500 block">
+                          <span className="text-xs font-mono text-slate-500 block">
                             {formatTimeRange12(svc.startTime, svc.endTime)}
                           </span>
                         </div>
 
                         {/* Attendance Count & Action Buttons */}
                         <div className="flex items-center gap-2 flex-wrap">
-                          <div className="px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800">
+                          <div className="min-h-[44px] px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 flex items-center">
                             <span className="text-blue-700 font-extrabold text-sm mr-1">{svc.totalCount}</span>
                             <span>{svc.totalCount === 1 ? 'attendee' : 'attendees'}</span>
                           </div>
@@ -908,11 +910,11 @@ export default function UsherHelpDesk() {
                                 setExportSource('SERVICE');
                                 setShowExportModal(true);
                               }}
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                              className="min-h-[44px] px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all duration-100 active:scale-[0.97] flex items-center gap-1.5 cursor-pointer"
                               title={`Download ${svc.name} attendance`}
                             >
-                              <Download className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">Download Sheet</span>
+                              <Download className="w-4 h-4 shrink-0" />
+                              <span>Download Sheet</span>
                             </button>
                           )}
 
@@ -921,11 +923,11 @@ export default function UsherHelpDesk() {
                             <button
                               type="button"
                               onClick={() => setExpandedServiceId(isExpanded ? null : svc.id)}
-                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                              className="min-h-[44px] px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all duration-100 active:scale-[0.97] flex items-center gap-1.5 cursor-pointer"
                             >
                               <span>{isExpanded ? 'Hide Roll Call' : 'View Roll Call'}</span>
                               <ChevronDown
-                                className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                               />
                             </button>
                           )}
@@ -934,22 +936,22 @@ export default function UsherHelpDesk() {
 
                       {/* Youth Breakdown Pills */}
                       {hasRecords ? (
-                        <div className="flex flex-wrap gap-1.5 text-[11px]">
+                        <div className="flex flex-wrap gap-2 text-xs">
                           {svc.membersCount > 0 && (
-                            <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-lg font-medium">
+                            <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2.5 py-1 rounded-lg font-medium">
                               Youth Members: <strong>{svc.membersCount}</strong>
                             </span>
                           )}
 
                           {svc.firstTimersCount > 0 && (
-                            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-lg font-medium flex items-center gap-0.5">
-                              <Sparkles className="w-2.5 h-2.5" />
+                            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-lg font-medium flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" />
                               <span>1st Timers: <strong>{svc.firstTimersCount}</strong></span>
                             </span>
                           )}
                         </div>
                       ) : (
-                        <p className="text-[11px] text-slate-400 italic">
+                        <p className="text-xs text-slate-400 italic">
                           No attendance marked yet for this program.
                         </p>
                       )}
@@ -957,7 +959,7 @@ export default function UsherHelpDesk() {
                       {/* Expanded Roll Call List */}
                       {isExpanded && hasRecords && (
                         <div className="pt-2 border-t border-slate-100 space-y-2 max-h-72 overflow-y-auto">
-                          <div className="text-[11px] font-bold text-slate-600 px-1">
+                          <div className="text-xs font-bold text-slate-600 px-1">
                             Roll Call for {svc.name} ({svc.records.length} attendees)
                           </div>
                           {svc.records.map((r: any) => {
@@ -971,20 +973,20 @@ export default function UsherHelpDesk() {
                             return (
                               <div
                                 key={r.id}
-                                className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between text-xs shadow-2xs"
+                                className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs shadow-2xs"
                               >
-                                <div>
-                                  <span className="font-bold text-slate-900 block">
+                                <div className="min-w-0 flex-1 space-y-0.5">
+                                  <span className="font-bold text-slate-900 block truncate">
                                     {r.person?.firstName} {r.person?.lastName}
                                   </span>
-                                  <span className="text-[11px] text-slate-500 font-mono">
+                                  <span className="text-xs text-slate-500 font-mono block break-words">
                                     {svc.name} &bull; Arrived: <strong className="text-slate-800">{timeFormatted} WAT</strong> &bull;{' '}
                                     {getCategoryDisplay(r.person)}
                                   </span>
                                 </div>
 
                                 <span
-                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                  className={`text-xs font-bold px-2.5 py-0.5 rounded-full border self-start sm:self-center shrink-0 ${
                                     r.method === 'QR_SELF'
                                       ? 'bg-blue-50 text-blue-700 border-blue-200'
                                       : 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -1002,9 +1004,9 @@ export default function UsherHelpDesk() {
                 })}
 
                 {/* Helpful Note at Bottom of Today's Attendance */}
-                <div className="bg-slate-100/70 border border-slate-200/80 rounded-2xl p-3 text-center">
-                  <p className="text-[11px] text-slate-500">
-                    💡 Today&apos;s attendance clears at midnight and is preserved forever in{' '}
+                <div className="bg-slate-100/70 border border-slate-200/80 rounded-2xl p-3.5 text-center">
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Today&apos;s attendance clears at midnight and is preserved in{' '}
                     <strong className="text-slate-700">Past Records History</strong>. Tap{' '}
                     <strong className="text-blue-700">Past Records</strong> in the top bar anytime to query past dates.
                   </p>
@@ -1018,22 +1020,23 @@ export default function UsherHelpDesk() {
         {showSelectServiceModal && (
           <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
             <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                     <Download className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">Download Attendance for Today</h3>
-                    <p className="text-[11px] text-slate-500">
-                      {currentDay || 'Today'} &bull; Choose a service to download its attendance report
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-slate-900 truncate">Download Attendance for Today</h3>
+                    <p className="text-xs text-slate-500 truncate">
+                      {currentDay || 'Today'} &bull; Choose a service report
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowSelectServiceModal(false)}
-                  className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+                  aria-label="Close modal"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 cursor-pointer shrink-0"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1045,13 +1048,13 @@ export default function UsherHelpDesk() {
                   return (
                     <div
                       key={svc.id}
-                      className="p-3.5 bg-slate-50 hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 rounded-2xl transition-all flex items-center justify-between gap-3"
+                      className="p-3.5 bg-slate-50 hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 rounded-2xl transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
-                      <div className="space-y-1">
+                      <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="text-sm font-bold text-slate-900">{svc.name}</h4>
+                          <h4 className="text-sm font-bold text-slate-900 truncate">{svc.name}</h4>
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            className={`text-xs font-bold px-2 py-0.5 rounded-full border shrink-0 ${
                               svc.status === 'LIVE'
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                 : svc.status === 'CONCLUDED'
@@ -1066,7 +1069,7 @@ export default function UsherHelpDesk() {
                               : 'Upcoming'}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] text-slate-500 font-mono">
+                        <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-xs text-slate-500 font-mono">
                           <span>{formatTimeRange12(svc.startTime, svc.endTime)}</span>
                           <span>&bull;</span>
                           <span className="font-bold text-slate-700 font-sans">
@@ -1086,9 +1089,9 @@ export default function UsherHelpDesk() {
                           setShowSelectServiceModal(false);
                           setShowExportModal(true);
                         }}
-                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+                        className="min-h-[44px] px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all duration-100 active:scale-[0.97] flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
                       >
-                        <Download className="w-3.5 h-3.5" />
+                        <Download className="w-4 h-4" />
                         <span>Download</span>
                       </button>
                     </div>
@@ -1096,10 +1099,10 @@ export default function UsherHelpDesk() {
                 })}
 
                 {/* Option for Full Day Combined Attendance */}
-                <div className="p-3.5 bg-blue-50/60 border border-blue-200 rounded-2xl flex items-center justify-between gap-3 mt-1">
-                  <div className="space-y-0.5">
+                <div className="p-3.5 bg-blue-50/60 border border-blue-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
+                  <div className="min-w-0 flex-1 space-y-0.5">
                     <h4 className="text-sm font-bold text-blue-950">Full Today Attendance (All Services)</h4>
-                    <p className="text-[11px] text-blue-700">
+                    <p className="text-xs text-blue-700">
                       Combined roll call for all services held today ({allTodayRecords.length} total attendees)
                     </p>
                   </div>
@@ -1110,9 +1113,9 @@ export default function UsherHelpDesk() {
                       setShowSelectServiceModal(false);
                       setShowExportModal(true);
                     }}
-                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+                    className="min-h-[44px] px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all duration-100 active:scale-[0.97] flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
                   >
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-4 h-4" />
                     <span>Download All</span>
                   </button>
                 </div>
@@ -1125,20 +1128,21 @@ export default function UsherHelpDesk() {
         {showHistoryModal && (
           <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
             <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 shrink-0">
                     <History className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">Past Services Attendance History</h3>
-                    <p className="text-[11px] text-slate-500">Query and download attendance for any past church date</p>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-slate-900 truncate">Past Services Attendance History</h3>
+                    <p className="text-xs text-slate-500 truncate">Query and download attendance for past dates</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowHistoryModal(false)}
-                  className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+                  aria-label="Close modal"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 cursor-pointer shrink-0"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1153,7 +1157,7 @@ export default function UsherHelpDesk() {
                       type="date"
                       value={historyDate}
                       onChange={(e) => setHistoryDate(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full min-h-[44px] bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
@@ -1167,14 +1171,14 @@ export default function UsherHelpDesk() {
                   </div>
                 </div>
 
-                <div className="flex gap-2 pt-1">
+                <div className="flex flex-col sm:flex-row gap-2 pt-1">
                   <button
                     type="button"
                     disabled={loadingHistory}
                     onClick={() => handleSearchHistory()}
-                    className="flex-1 py-2 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-xl font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    className="flex-1 min-h-[44px] py-2.5 px-4 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-xl font-bold shadow-xs transition-all duration-100 active:scale-[0.97] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
-                    <Search className="w-3.5 h-3.5" />
+                    <Search className="w-4 h-4" />
                     <span>{loadingHistory ? 'Searching...' : 'Search Past Records'}</span>
                   </button>
 
@@ -1185,9 +1189,9 @@ export default function UsherHelpDesk() {
                         setExportSource('HISTORY');
                         setShowExportModal(true);
                       }}
-                      className="py-2 px-3 text-xs text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                      className="min-h-[44px] py-2.5 px-4 text-xs text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl font-bold shadow-xs transition-all duration-100 active:scale-[0.97] flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      <Download className="w-3.5 h-3.5" />
+                      <Download className="w-4 h-4" />
                       <span>Download Sheet</span>
                     </button>
                   )}
@@ -1208,10 +1212,10 @@ export default function UsherHelpDesk() {
               {hasSearchedHistory && historyRecords.length === 0 && !loadingHistory && (
                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center space-y-2">
                   <Calendar className="w-7 h-7 text-slate-300 mx-auto" />
-                  <p className="text-xs font-semibold text-slate-700">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-700">
                     No attendance records found for {historyDate}.
                   </p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-xs text-slate-500">
                     Try choosing another date or selecting &ldquo;All Services on this Date&rdquo;.
                   </p>
                 </div>
@@ -1230,20 +1234,20 @@ export default function UsherHelpDesk() {
                   return (
                     <div
                       key={r.id}
-                      className="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between text-xs shadow-2xs"
+                      className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs shadow-2xs"
                     >
-                      <div>
-                        <span className="font-bold text-slate-900 block">
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <span className="font-bold text-slate-900 block truncate">
                           {r.person?.firstName} {r.person?.lastName}
                         </span>
-                        <span className="text-[11px] text-slate-500 font-mono">
-                          {r.serviceSchedule?.name} • Arrived: <strong className="text-slate-800">{timeFormatted} WAT</strong> •{' '}
+                        <span className="text-xs text-slate-500 font-mono block break-words">
+                          {r.serviceSchedule?.name} &bull; Arrived: <strong className="text-slate-800">{timeFormatted} WAT</strong> &bull;{' '}
                           {getCategoryDisplay(r.person)}
                         </span>
                       </div>
 
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        className={`text-xs font-bold px-2.5 py-0.5 rounded-full border self-start sm:self-center shrink-0 ${
                           r.method === 'QR_SELF'
                             ? 'bg-blue-50 text-blue-700 border-blue-200'
                             : 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -1271,7 +1275,8 @@ export default function UsherHelpDesk() {
                 <button
                   type="button"
                   onClick={() => setEditingPerson(null)}
-                  className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                  aria-label="Close modal"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1292,9 +1297,9 @@ export default function UsherHelpDesk() {
                     value={newPhoneNumber}
                     onChange={(e) => setNewPhoneNumber(e.target.value)}
                     placeholder="e.g. 08023456789"
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                    className="w-full min-h-[44px] bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                   />
-                  <p className="text-[11px] text-slate-400 mt-1">
+                  <p className="text-xs text-slate-500 mt-1.5">
                     Their new check-in last 4 digits will become:{' '}
                     <strong className="text-blue-600">
                       {newPhoneNumber.trim().length >= 4 ? newPhoneNumber.trim().slice(-4) : '••••'}
@@ -1306,14 +1311,14 @@ export default function UsherHelpDesk() {
                   <button
                     type="button"
                     onClick={() => setEditingPerson(null)}
-                    className="flex-1 py-2 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold transition-colors cursor-pointer"
+                    className="flex-1 min-h-[44px] py-2 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold transition-all duration-100 active:scale-[0.97] cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submittingPhone}
-                    className="flex-1 py-2 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-xl font-bold shadow-xs transition-colors cursor-pointer"
+                    className="flex-1 min-h-[44px] py-2 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-xl font-bold shadow-xs transition-all duration-100 active:scale-[0.97] cursor-pointer"
                   >
                     {submittingPhone ? 'Saving...' : 'Save & Update'}
                   </button>
@@ -1326,7 +1331,7 @@ export default function UsherHelpDesk() {
         {/* MODAL 2: ADD NEW YOUTH (MEMBER OR FIRST-TIMER) */}
         {showAddPersonModal && (
           <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl animate-in zoom-in-95 duration-150">
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                   <UserPlus className="w-4 h-4 text-blue-600" />
@@ -1335,7 +1340,8 @@ export default function UsherHelpDesk() {
                 <button
                   type="button"
                   onClick={() => setShowAddPersonModal(false)}
-                  className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                  aria-label="Close modal"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1350,7 +1356,7 @@ export default function UsherHelpDesk() {
                     value={newFirstName}
                     onChange={(e) => setNewFirstName(e.target.value)}
                     placeholder="e.g. Oluwaseun"
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full min-h-[44px] bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
@@ -1361,21 +1367,21 @@ export default function UsherHelpDesk() {
                     value={newLastName}
                     onChange={(e) => setNewLastName(e.target.value)}
                     placeholder="e.g. Adeleke"
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full min-h-[44px] bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-slate-700 font-bold">Phone Number</label>
-                    <span className="text-[10px] text-slate-400 font-normal">Optional (if no phone)</span>
+                    <span className="text-xs text-slate-400 font-normal">Optional</span>
                   </div>
                   <input
                     type="tel"
                     value={newPhone}
                     onChange={(e) => setNewPhone(e.target.value)}
                     placeholder="e.g. 08023456789 (or leave blank)"
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full min-h-[44px] bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
@@ -1390,20 +1396,20 @@ export default function UsherHelpDesk() {
                 </div>
 
                 {isLiveNow && activeService ? (
-                  <div className="pt-1 flex items-center gap-2">
+                  <div className="pt-1 flex items-center gap-2 min-h-[44px]">
                     <input
                       type="checkbox"
                       id="markNow"
                       checked={markAttendanceImmediately}
                       onChange={(e) => setMarkAttendanceImmediately(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
+                      className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer shrink-0"
                     />
                     <label htmlFor="markNow" className="text-slate-700 font-semibold cursor-pointer">
                       Mark present for {activeService.name} now
                     </label>
                   </div>
                 ) : (
-                  <p className="text-[11px] text-slate-500 italic pt-1">
+                  <p className="text-xs text-slate-500 italic pt-1">
                     Off-hours: Member will be added to database (attendance marking is locked until service is live).
                   </p>
                 )}
@@ -1412,14 +1418,14 @@ export default function UsherHelpDesk() {
                   <button
                     type="button"
                     onClick={() => setShowAddPersonModal(false)}
-                    className="flex-1 py-2 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold transition-colors cursor-pointer"
+                    className="flex-1 min-h-[44px] py-2 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold transition-all duration-100 active:scale-[0.97] cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submittingNewPerson}
-                    className="flex-1 py-2 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-xl font-bold shadow-xs transition-colors cursor-pointer"
+                    className="flex-1 min-h-[44px] py-2 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-xl font-bold shadow-xs transition-all duration-100 active:scale-[0.97] cursor-pointer"
                   >
                     {submittingNewPerson ? 'Saving...' : 'Save to DB'}
                   </button>
@@ -1428,6 +1434,13 @@ export default function UsherHelpDesk() {
             </div>
           </div>
         )}
+
+        {/* Strategic Bible Verse Footer */}
+        <footer className="pt-4 pb-6 text-center">
+          <p className="text-xs text-slate-500 italic">
+            &ldquo;I would rather be a doorkeeper in the house of my God...&rdquo; &mdash; Psalm 84:10
+          </p>
+        </footer>
       </main>
     </div>
   );

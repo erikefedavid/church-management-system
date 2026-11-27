@@ -282,7 +282,7 @@ export default function AdminScorecardDashboard() {
 
             <button
               type="submit"
-              className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
+              className="w-full min-h-[44px] py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2 active:scale-[0.97]"
             >
               <Lock className="w-4 h-4" />
               <span>Unlock Scorecard</span>
@@ -291,7 +291,7 @@ export default function AdminScorecardDashboard() {
 
           <Link
             href="/"
-            className="text-xs text-slate-500 hover:text-blue-600 transition-colors block cursor-pointer font-medium"
+            className="text-xs text-slate-500 hover:text-blue-600 transition-colors inline-flex items-center justify-center min-h-[44px] px-3 cursor-pointer font-medium"
           >
             ← Return to Member Door Screen
           </Link>
@@ -401,7 +401,8 @@ export default function AdminScorecardDashboard() {
               <button
                 type="button"
                 onClick={() => setShowLocationModal(false)}
-                className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 cursor-pointer"
+                className="w-11 h-11 rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-500 cursor-pointer active:scale-[0.97]"
+                aria-label="Close modal"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -415,38 +416,38 @@ export default function AdminScorecardDashboard() {
               type="button"
               onClick={handleDetectCurrentGps}
               disabled={locDetecting}
-              className="w-full py-2.5 px-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 text-xs font-bold transition-colors cursor-pointer"
+              className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 text-xs font-bold transition-colors cursor-pointer active:scale-[0.97]"
             >
               {locDetecting ? 'Reading GPS...' : 'Use My Current GPS Location'}
             </button>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-bold text-slate-700 block mb-1">Latitude</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Latitude</label>
                 <input
                   type="number"
                   step="any"
                   required
                   value={locLat}
                   onChange={(e) => setLocLat(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900"
+                  className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900"
                 />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-700 block mb-1">Longitude</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Longitude</label>
                 <input
                   type="number"
                   step="any"
                   required
                   value={locLng}
                   onChange={(e) => setLocLng(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900"
+                  className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-[11px] font-bold text-slate-700 block mb-1">
+              <label className="text-xs font-bold text-slate-700 block mb-1">
                 Geofence Radius (meters)
               </label>
               <input
@@ -456,7 +457,7 @@ export default function AdminScorecardDashboard() {
                 required
                 value={locRadius}
                 onChange={(e) => setLocRadius(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900"
+                className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900"
               />
             </div>
 
@@ -464,14 +465,14 @@ export default function AdminScorecardDashboard() {
               <button
                 type="button"
                 onClick={() => setShowLocationModal(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                className="min-h-[44px] px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer active:scale-[0.97]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={locSaving}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer active:scale-[0.97]"
               >
                 {locSaving ? 'Saving...' : 'Save Location'}
               </button>
@@ -482,35 +483,36 @@ export default function AdminScorecardDashboard() {
 
       {/* Top Header */}
       <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-30 px-4 py-3 shadow-xs">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="relative w-11 h-11 shrink-0">
               <Image src="/rccg-logo.png" alt="RCCG" fill className="object-contain" priority />
             </div>
-            <div>
-              <h1 className="text-base font-bold text-slate-900 leading-tight">
+            <div className="min-w-0">
+              <h1 className="text-base font-bold text-slate-900 leading-tight truncate">
                 RCCG Jesus Covenant Zone
               </h1>
-              <p className="text-xs text-blue-700 font-semibold flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>{data?.todayDateString || 'Sunday Attendance Scorecard'}</span>
+              <p className="text-xs text-blue-700 font-semibold flex items-center gap-1.5 truncate">
+                <Calendar className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{data?.todayDateString || 'Sunday Attendance Scorecard'}</span>
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
             {/* Styled Custom Timeframe Dropdown */}
-            <div className="w-44">
+            <div className="w-full sm:w-48">
               <CustomDropdown
                 value={timeRange}
                 onChange={(val) => handleTimeRangeChange(val as AdminTimeRange)}
                 options={timeRangeOptions}
-                leadingIcon={<Calendar className="w-3.5 h-3.5 text-blue-600" />}
+                leadingIcon={<Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                buttonClassName="min-h-[44px]"
               />
             </div>
 
             {/* Pick Specific Date for Past Records */}
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-2xs">
+            <div className="w-full sm:w-auto min-h-[44px] flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-2xs">
               <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <input
                 type="date"
@@ -523,7 +525,7 @@ export default function AdminScorecardDashboard() {
                     loadScorecard('CUSTOM_DATE', val);
                   }
                 }}
-                className="text-xs text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+                className="min-w-0 flex-1 w-full sm:w-auto text-xs text-slate-800 bg-transparent focus:outline-none cursor-pointer"
                 title="Filter by specific date"
               />
               {selectedDate && (
@@ -534,8 +536,9 @@ export default function AdminScorecardDashboard() {
                     setTimeRange('TODAY');
                     loadScorecard('TODAY', '');
                   }}
-                  className="text-slate-400 hover:text-slate-700 text-xs font-bold cursor-pointer ml-0.5"
+                  className="text-slate-400 hover:text-slate-700 text-xs font-bold cursor-pointer p-1 shrink-0"
                   title="Clear date filter"
+                  aria-label="Clear date filter"
                 >
                   ✕
                 </button>
@@ -545,20 +548,20 @@ export default function AdminScorecardDashboard() {
             <button
               type="button"
               onClick={openLocationModal}
-              className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl border border-slate-200 font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="w-full sm:w-auto min-h-[44px] text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl border border-slate-200 font-bold transition-colors flex items-center justify-center sm:justify-start gap-1.5 cursor-pointer active:scale-[0.97]"
               title="Set exact church sanctuary GPS coordinates"
             >
-              <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+              <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span>Sanctuary GPS</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowServicesModal(true)}
-              className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl border border-slate-200 font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="w-full sm:w-auto min-h-[44px] text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl border border-slate-200 font-bold transition-colors flex items-center justify-center sm:justify-start gap-1.5 cursor-pointer active:scale-[0.97]"
               title="Edit church service start and end hours"
             >
-              <Clock className="w-3.5 h-3.5 text-blue-600" />
+              <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
               <span>Service Times</span>
             </button>
 
@@ -566,9 +569,9 @@ export default function AdminScorecardDashboard() {
               type="button"
               onClick={() => loadScorecard(timeRange)}
               disabled={refreshing}
-              className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl border border-slate-200 font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="w-full sm:w-auto min-h-[44px] text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl border border-slate-200 font-bold transition-colors flex items-center justify-center sm:justify-start gap-1.5 cursor-pointer active:scale-[0.97]"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${refreshing ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
 
@@ -576,20 +579,21 @@ export default function AdminScorecardDashboard() {
             <button
               type="button"
               onClick={() => setShowImportModal(true)}
-              className="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-800 px-3 py-2 rounded-xl border border-indigo-200 font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-[0.97]"
+              className="w-full sm:w-auto min-h-[44px] text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-800 px-3 py-2 rounded-xl border border-indigo-200 font-bold transition-colors flex items-center justify-center sm:justify-start gap-1.5 cursor-pointer shadow-2xs active:scale-[0.97]"
               title="Import Youth members from Excel (.xlsx, .csv) or Word (.docx)"
             >
-              <Upload className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Import Members (Excel / Word)</span>
+              <Upload className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+              <span className="sm:hidden">Import Members</span>
+              <span className="hidden sm:inline">Import Members (Excel / Word)</span>
             </button>
 
             {/* Export Excel / CSV Button */}
             <button
               type="button"
               onClick={() => setShowExportModal(true)}
-              className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="col-span-2 sm:col-span-1 w-full sm:w-auto min-h-[44px] text-xs bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97]"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />
               <span>Download Excel</span>
             </button>
           </div>
@@ -634,75 +638,75 @@ export default function AdminScorecardDashboard() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Metric 1: Total Present */}
               <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wider">
                     Total Present
                   </span>
-                  <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                     <Users className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
                   {data?.totalUniqueAttendees || 0}
                 </div>
-                <p className="text-[10px] text-slate-500 font-medium">Youth &amp; First-Timers</p>
+                <p className="text-xs text-slate-500 font-medium">Youth &amp; First-Timers</p>
               </div>
 
               {/* Metric 2: Youth Members */}
               <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wider">
                     Youth Members
                   </span>
-                  <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
                     <Sparkles className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-extrabold text-amber-600">
                   {data?.categoryBreakdown?.totalYouth ?? Math.max(0, (data?.totalUniqueAttendees || 0) - (data?.totalFirstTimers || 0))}
                 </div>
-                <p className="text-[10px] text-slate-500 font-medium">Returning youth</p>
+                <p className="text-xs text-slate-500 font-medium">Returning youth</p>
               </div>
 
               {/* Metric 3: First-Timers */}
               <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wider">
                     First-Timers
                   </span>
-                  <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                     <UserPlus className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600">
                   {data?.categoryBreakdown?.totalFirstTimers ?? data?.totalFirstTimers ?? 0}
                 </div>
-                <p className="text-[10px] text-slate-500 font-medium">New souls registered</p>
+                <p className="text-xs text-slate-500 font-medium">New souls registered</p>
               </div>
 
               {/* Metric 4: Self Check-In Rate */}
               <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-3xl p-4 shadow-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wider">
                     Self Check-In
                   </span>
-                  <div className="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                     <Smartphone className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-extrabold text-indigo-600">
                   {data?.selfScanPercentage ?? 0}%
                 </div>
-                <p className="text-[10px] text-slate-500 font-medium">QR self-scan share</p>
+                <p className="text-xs text-slate-500 font-medium">QR self-scan share</p>
               </div>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex flex-wrap rounded-2xl bg-slate-100 p-1.5 border border-slate-200 gap-1">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap rounded-2xl bg-slate-100 p-1.5 border border-slate-200 gap-1.5">
               <button
                 type="button"
                 onClick={() => setActiveTab('SERVICES')}
-                className={`flex-1 min-w-[100px] py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.97] ${
+                className={`min-h-[44px] sm:flex-1 py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center active:scale-[0.97] ${
                   activeTab === 'SERVICES'
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -713,7 +717,7 @@ export default function AdminScorecardDashboard() {
               <button
                 type="button"
                 onClick={() => setActiveTab('FIRST_TIMERS')}
-                className={`flex-1 min-w-[120px] py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.97] ${
+                className={`min-h-[44px] sm:flex-1 py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center active:scale-[0.97] ${
                   activeTab === 'FIRST_TIMERS'
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -724,43 +728,43 @@ export default function AdminScorecardDashboard() {
               <button
                 type="button"
                 onClick={() => setActiveTab('ROLL_CALL')}
-                className={`flex-1 min-w-[110px] py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.97] ${
+                className={`min-h-[44px] sm:flex-1 py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center active:scale-[0.97] ${
                   activeTab === 'ROLL_CALL'
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Full Roll ({data?.recentAttendanceRecords?.length || 0})
+                Roll Call ({data?.recentAttendanceRecords?.length || 0})
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('FOLLOW_UP')}
-                className={`flex-1 min-w-[130px] py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.97] ${
+                className={`min-h-[44px] sm:flex-1 py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.97] ${
                   activeTab === 'FOLLOW_UP'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <HeartHandshake className="w-3.5 h-3.5" />
+                <HeartHandshake className="w-3.5 h-3.5 shrink-0" />
                 <span>Follow-Up ({data?.followUpSummary?.recentResults?.length || 0})</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('BIRTHDAYS')}
-                className={`flex-1 min-w-[125px] py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.97] ${
+                className={`min-h-[44px] sm:flex-1 py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.97] ${
                   activeTab === 'BIRTHDAYS'
                     ? 'bg-amber-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Cake className="w-3.5 h-3.5" />
+                <Cake className="w-3.5 h-3.5 shrink-0" />
                 <span>Birthdays ({data?.upcomingBirthdays?.next7DaysCount || 0})</span>
               </button>
               {data?.trendHistory && data.trendHistory.length > 1 && (
                 <button
                   type="button"
                   onClick={() => setActiveTab('TREND')}
-                  className={`flex-1 min-w-[100px] py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.97] ${
+                  className={`min-h-[44px] sm:flex-1 py-2 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center active:scale-[0.97] ${
                     activeTab === 'TREND'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -853,7 +857,7 @@ export default function AdminScorecardDashboard() {
 
                         {/* Action Buttons: 1-Click Excel Download & Roll Call Expansion */}
                         {hasRecords && (
-                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                          <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-2 pt-2 border-t border-slate-100">
                             <button
                               type="button"
                               onClick={() => {
@@ -865,21 +869,21 @@ export default function AdminScorecardDashboard() {
                                 });
                                 setShowExportModal(true);
                               }}
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                              className="min-h-[44px] px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97]"
                               title={`Download ${svc.name} attendance`}
                             >
-                              <Download className="w-3.5 h-3.5" />
+                              <Download className="w-3.5 h-3.5 shrink-0" />
                               <span>Download Sheet</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={() => setExpandedServiceId(isExpanded ? null : svc.id)}
-                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
+                              className="min-h-[44px] px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-1 cursor-pointer active:scale-[0.97]"
                             >
                               <span>{isExpanded ? 'Hide Roll' : 'View Roll Call'}</span>
                               <ChevronDown
-                                className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                className={`w-3.5 h-3.5 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                               />
                             </button>
                           </div>
@@ -888,7 +892,7 @@ export default function AdminScorecardDashboard() {
                         {/* Roll Call Accordion */}
                         {isExpanded && hasRecords && (
                           <div className="pt-2 border-t border-slate-100 space-y-2 max-h-60 overflow-y-auto">
-                            <div className="text-[11px] font-bold text-slate-600 px-1">
+                            <div className="text-xs font-bold text-slate-600 px-1">
                               Attendees for {svc.name} ({svc.records.length})
                             </div>
                             {svc.records.map((r: any) => {
@@ -902,10 +906,10 @@ export default function AdminScorecardDashboard() {
                               return (
                                 <div
                                   key={r.id}
-                                  className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between text-xs"
+                                  className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between gap-2 text-xs"
                                 >
-                                  <div>
-                                    <span className="font-bold text-slate-900 block">
+                                  <div className="min-w-0">
+                                    <span className="font-bold text-slate-900 block truncate">
                                       {r.person?.firstName} {r.person?.lastName}
                                     </span>
                                     <span className="text-[11px] text-slate-500 font-mono">
@@ -915,7 +919,7 @@ export default function AdminScorecardDashboard() {
                                   </div>
 
                                   <span
-                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                    className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 ${
                                       r.method === 'QR_SELF'
                                         ? 'bg-blue-50 text-blue-700 border-blue-200'
                                         : 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -969,20 +973,20 @@ export default function AdminScorecardDashboard() {
                           key={ft.id}
                           className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
                         >
-                          <div>
-                            <div className="flex items-center gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="text-base font-bold text-slate-900">
                                 {ft.firstName} {ft.lastName}
                               </h3>
-                              <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">
+                              <span className="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">
                                 First-Timer
                               </span>
-                              <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
+                              <span className="text-[11px] bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full font-medium">
                                 {ft.category}
                               </span>
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">
-                              Phone: <strong className="text-slate-800">{ft.phone}</strong> • Recorded on{' '}
+                            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                              Phone: <strong className="text-slate-800">{ft.phone}</strong> &bull; Recorded on{' '}
                               <span className="text-blue-700 font-semibold">{ft.timeString}</span> during{' '}
                               <span className="text-slate-700">{ft.serviceName}</span>
                             </p>
@@ -994,17 +998,17 @@ export default function AdminScorecardDashboard() {
                               href={`https://wa.me/${intlPhone}?text=${welcomeMsg}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                              className="min-h-[44px] flex-1 sm:flex-initial text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97]"
                             >
-                              <MessageCircle className="w-3.5 h-3.5" />
+                              <MessageCircle className="w-3.5 h-3.5 shrink-0" />
                               <span>WhatsApp</span>
                             </a>
 
                             <a
                               href={`tel:${ft.phone}`}
-                              className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                              className="min-h-[44px] flex-1 sm:flex-initial text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3.5 py-2 rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97]"
                             >
-                              <Phone className="w-3.5 h-3.5" />
+                              <Phone className="w-3.5 h-3.5 shrink-0" />
                               <span>Call</span>
                             </a>
                           </div>
@@ -1019,16 +1023,16 @@ export default function AdminScorecardDashboard() {
             {/* TAB 3: LIVE ATTENDANCE ROLL */}
             {activeTab === 'ROLL_CALL' && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <h2 className="text-sm font-bold text-slate-900">
                     Attendance Log ({data?.recentAttendanceRecords?.length || 0} Records)
                   </h2>
                   <button
                     type="button"
                     onClick={() => setShowExportModal(true)}
-                    className="text-xs text-blue-600 hover:underline font-bold cursor-pointer flex items-center gap-1"
+                    className="min-h-[44px] px-3 text-xs text-blue-600 hover:bg-blue-50 rounded-xl font-bold cursor-pointer flex items-center gap-1.5 active:scale-[0.97]"
                   >
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-3.5 h-3.5 shrink-0" />
                     <span>Download Excel</span>
                   </button>
                 </div>
@@ -1038,59 +1042,105 @@ export default function AdminScorecardDashboard() {
                     <p className="text-sm font-semibold text-slate-700">No records found for this timeframe.</p>
                   </div>
                 ) : (
-                  <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
-                    <div className="overflow-x-auto max-h-96">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold sticky top-0">
-                          <tr>
-                            <th className="p-3.5">Member Name</th>
-                            <th className="p-3.5">Category</th>
-                            <th className="p-3.5">Service</th>
-                            <th className="p-3.5">Method</th>
-                            <th className="p-3.5">Date / Time</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {data?.recentAttendanceRecords?.map((r: any) => (
-                            <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
-                              <td className="p-3.5 font-bold text-slate-900">
-                                {r.person?.firstName} {r.person?.lastName}
-                              </td>
-                              <td className="p-3.5 text-slate-600">
-                                <span className="px-2 py-0.5 bg-slate-100 rounded-md font-semibold text-[11px]">
-                                  {getCategoryDisplay(r.person)}
-                                </span>
-                              </td>
-                              <td className="p-3.5 font-semibold text-blue-700">
-                                {r.serviceSchedule?.name} {r.subClass && `(${r.subClass})`}
-                              </td>
-                              <td className="p-3.5">
-                                <span
-                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                    r.method === 'QR_SELF'
-                                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                      : 'bg-slate-100 text-slate-600'
-                                  }`}
-                                >
-                                  {r.method === 'QR_SELF' ? 'Self Scan' : 'Usher Marked'}
-                                </span>
-                              </td>
-                              <td className="p-3.5 text-slate-500 font-mono">
-                                {new Date(r.createdAt).toLocaleDateString([], {
-                                  month: 'short',
-                                  day: 'numeric',
-                                })}{' '}
-                                {new Date(r.createdAt).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                  <>
+                    {/* Mobile Cards (< sm) */}
+                    <div className="block sm:hidden space-y-2.5">
+                      {data?.recentAttendanceRecords?.map((r: any) => (
+                        <div
+                          key={r.id}
+                          className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-4 shadow-xs space-y-2"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="text-sm font-bold text-slate-900 min-w-0 truncate">
+                              {r.person?.firstName} {r.person?.lastName}
+                            </span>
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${
+                                r.method === 'QR_SELF'
+                                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                  : 'bg-slate-100 text-slate-700 border border-slate-200'
+                              }`}
+                            >
+                              {r.method === 'QR_SELF' ? 'Self Scan' : 'Usher Marked'}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <span className="font-semibold text-blue-700">
+                              {r.serviceSchedule?.name} {r.subClass && `(${r.subClass})`}
+                            </span>
+                            <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md font-semibold text-[11px]">
+                              {getCategoryDisplay(r.person)}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 font-mono">
+                            {new Date(r.createdAt).toLocaleDateString([], {
+                              month: 'short',
+                              day: 'numeric',
+                            })}{' '}
+                            {new Date(r.createdAt).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </p>
+                        </div>
+                      ))}
                     </div>
-                  </div>
+
+                    {/* Desktop Table (sm+) */}
+                    <div className="hidden sm:block bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+                      <div className="overflow-x-auto max-h-96">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold sticky top-0">
+                            <tr>
+                              <th className="p-3.5">Member Name</th>
+                              <th className="p-3.5">Category</th>
+                              <th className="p-3.5">Service</th>
+                              <th className="p-3.5">Method</th>
+                              <th className="p-3.5">Date / Time</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {data?.recentAttendanceRecords?.map((r: any) => (
+                              <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="p-3.5 font-bold text-slate-900">
+                                  {r.person?.firstName} {r.person?.lastName}
+                                </td>
+                                <td className="p-3.5 text-slate-600">
+                                  <span className="px-2 py-0.5 bg-slate-100 rounded-md font-semibold text-[11px]">
+                                    {getCategoryDisplay(r.person)}
+                                  </span>
+                                </td>
+                                <td className="p-3.5 font-semibold text-blue-700">
+                                  {r.serviceSchedule?.name} {r.subClass && `(${r.subClass})`}
+                                </td>
+                                <td className="p-3.5">
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                      r.method === 'QR_SELF'
+                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}
+                                  >
+                                    {r.method === 'QR_SELF' ? 'Self Scan' : 'Usher Marked'}
+                                  </span>
+                                </td>
+                                <td className="p-3.5 text-slate-500 font-mono">
+                                  {new Date(r.createdAt).toLocaleDateString([], {
+                                    month: 'short',
+                                    day: 'numeric',
+                                  })}{' '}
+                                  {new Date(r.createdAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -1098,21 +1148,21 @@ export default function AdminScorecardDashboard() {
             {/* TAB 4: FOLLOW-UP OUTCOMES & TASKS */}
             {activeTab === 'FOLLOW_UP' && (
               <div className="space-y-5">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pending Tasks</p>
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-xs">
+                    <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Pending</p>
                     <p className="text-2xl font-extrabold text-amber-600 mt-1">
                       {data?.followUpSummary?.pendingCount ?? 0}
                     </p>
                   </div>
-                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Contacted</p>
+                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-xs">
+                    <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Contacted</p>
                     <p className="text-2xl font-extrabold text-emerald-600 mt-1">
                       {data?.followUpSummary?.contactedCount ?? 0}
                     </p>
                   </div>
-                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Escalated</p>
+                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-xs">
+                    <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Escalated</p>
                     <p className="text-2xl font-extrabold text-rose-600 mt-1">
                       {data?.followUpSummary?.escalatedCount ?? 0}
                     </p>
@@ -1123,7 +1173,7 @@ export default function AdminScorecardDashboard() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                       <span>Recent Follow-Up Outcomes ({data?.followUpSummary?.totalResultsCount ?? 0} total)</span>
                     </h2>
                   </div>
@@ -1151,11 +1201,11 @@ export default function AdminScorecardDashboard() {
                             key={res.id}
                             className="bg-white/95 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
                           >
-                            <div className="space-y-1">
+                            <div className="space-y-1.5 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-sm font-bold text-slate-900">{res.personName}</span>
                                 <span
-                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                  className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
                                     isAttention
                                       ? 'bg-amber-50 text-amber-800 border-amber-200'
                                       : 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -1163,16 +1213,16 @@ export default function AdminScorecardDashboard() {
                                 >
                                   {res.outcome}
                                 </span>
-                                <span className="text-[10px] text-slate-500 font-medium">
+                                <span className="text-xs text-slate-500 font-medium">
                                   Week {res.weekNumber} &bull; Caller: <strong className="text-slate-700">{res.callerName}</strong>
                                 </span>
                               </div>
                               {res.note && (
-                                <p className="text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1.5">
+                                <p className="text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1.5 leading-relaxed">
                                   {res.note}
                                 </p>
                               )}
-                              <p className="text-[11px] text-slate-400 font-mono">{res.createdAtFormatted}</p>
+                              <p className="text-xs text-slate-400 font-mono">{res.createdAtFormatted}</p>
                             </div>
 
                             {cleanPhone.length >= 7 && (
@@ -1181,16 +1231,16 @@ export default function AdminScorecardDashboard() {
                                   href={`https://wa.me/${intlPhone}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1 active:scale-[0.97]"
+                                  className="min-h-[44px] flex-1 sm:flex-initial text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 active:scale-[0.97]"
                                 >
-                                  <MessageCircle className="w-3.5 h-3.5" />
+                                  <MessageCircle className="w-3.5 h-3.5 shrink-0" />
                                   <span>WhatsApp</span>
                                 </a>
                                 <a
                                   href={`tel:${res.phone}`}
-                                  className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl border border-slate-200 transition-colors flex items-center gap-1 active:scale-[0.97]"
+                                  className="min-h-[44px] flex-1 sm:flex-initial text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3.5 py-2 rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-1.5 active:scale-[0.97]"
                                 >
-                                  <Phone className="w-3.5 h-3.5" />
+                                  <Phone className="w-3.5 h-3.5 shrink-0" />
                                   <span>Call</span>
                                 </a>
                               </div>
@@ -1205,7 +1255,7 @@ export default function AdminScorecardDashboard() {
                 {/* Active & Escalated Tasks */}
                 <div className="space-y-3">
                   <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                     <span>Open &amp; Escalated Follow-Up Tasks ({data?.followUpSummary?.activeTasks?.length ?? 0})</span>
                   </h2>
 
@@ -1214,48 +1264,84 @@ export default function AdminScorecardDashboard() {
                       No open or escalated follow-up tasks.
                     </div>
                   ) : (
-                    <div className="bg-white/95 border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
-                      <div className="overflow-x-auto max-h-80">
-                        <table className="w-full text-left text-xs">
-                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold">
-                            <tr>
-                              <th className="p-3">Member</th>
-                              <th className="p-3">Reason</th>
-                              <th className="p-3">Status</th>
-                              <th className="p-3">Due</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {data.followUpSummary.activeTasks.map((task) => (
-                              <tr key={task.id} className="hover:bg-slate-50/80">
-                                <td className="p-3 font-bold text-slate-900">
-                                  {task.personName}
-                                  <span className="block text-[11px] font-normal text-slate-500">{task.phone}</span>
-                                </td>
-                                <td className="p-3 text-slate-700 font-medium">{task.reason.replace(/_/g, ' ')}</td>
-                                <td className="p-3">
-                                  <span
-                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                                      task.status === 'ESCALATED'
-                                        ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                        : 'bg-amber-50 text-amber-700 border-amber-200'
-                                    }`}
-                                  >
-                                    {task.status}
-                                  </span>
-                                </td>
-                                <td className="p-3 font-mono text-slate-600">
-                                  {task.dueDateFormatted}
-                                  {task.isOverdue && (
-                                    <span className="ml-1.5 text-[10px] font-bold text-rose-600">Overdue</span>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                    <>
+                      {/* Mobile Cards (< sm) */}
+                      <div className="block sm:hidden space-y-2.5">
+                        {data.followUpSummary.activeTasks.map((task) => (
+                          <div
+                            key={task.id}
+                            className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs space-y-2"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-slate-900 truncate">{task.personName}</p>
+                                <p className="text-xs text-slate-500 font-mono">{task.phone}</p>
+                              </div>
+                              <span
+                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border shrink-0 ${
+                                  task.status === 'ESCALATED'
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                                }`}
+                              >
+                                {task.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-700 font-medium">{task.reason.replace(/_/g, ' ')}</p>
+                            <p className="text-xs font-mono text-slate-600">
+                              Due: {task.dueDateFormatted}
+                              {task.isOverdue && (
+                                <span className="ml-2 text-xs font-bold text-rose-600">Overdue</span>
+                              )}
+                            </p>
+                          </div>
+                        ))}
                       </div>
-                    </div>
+
+                      {/* Desktop Table (sm+) */}
+                      <div className="hidden sm:block bg-white/95 border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+                        <div className="overflow-x-auto max-h-80">
+                          <table className="w-full text-left text-xs">
+                            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold">
+                              <tr>
+                                <th className="p-3">Member</th>
+                                <th className="p-3">Reason</th>
+                                <th className="p-3">Status</th>
+                                <th className="p-3">Due</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {data.followUpSummary.activeTasks.map((task) => (
+                                <tr key={task.id} className="hover:bg-slate-50/80">
+                                  <td className="p-3 font-bold text-slate-900">
+                                    {task.personName}
+                                    <span className="block text-[11px] font-normal text-slate-500">{task.phone}</span>
+                                  </td>
+                                  <td className="p-3 text-slate-700 font-medium">{task.reason.replace(/_/g, ' ')}</td>
+                                  <td className="p-3">
+                                    <span
+                                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                        task.status === 'ESCALATED'
+                                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                                      }`}
+                                    >
+                                      {task.status}
+                                    </span>
+                                  </td>
+                                  <td className="p-3 font-mono text-slate-600">
+                                    {task.dueDateFormatted}
+                                    {task.isOverdue && (
+                                      <span className="ml-1.5 text-[10px] font-bold text-rose-600">Overdue</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -1264,21 +1350,21 @@ export default function AdminScorecardDashboard() {
             {/* TAB 5: UPCOMING BIRTHDAYS */}
             {activeTab === 'BIRTHDAYS' && (
               <div className="space-y-5">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Today</p>
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-xs">
+                    <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Today</p>
                     <p className="text-2xl font-extrabold text-emerald-600 mt-1">
                       {data?.upcomingBirthdays?.todayCount ?? 0}
                     </p>
                   </div>
-                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tomorrow</p>
+                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-xs">
+                    <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Tomorrow</p>
                     <p className="text-2xl font-extrabold text-amber-600 mt-1">
                       {data?.upcomingBirthdays?.tomorrowCount ?? 0}
                     </p>
                   </div>
-                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Next 7 Days</p>
+                  <div className="bg-white/95 border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-xs">
+                    <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Next 7 Days</p>
                     <p className="text-2xl font-extrabold text-blue-600 mt-1">
                       {data?.upcomingBirthdays?.next7DaysCount ?? 0}
                     </p>
@@ -1294,75 +1380,140 @@ export default function AdminScorecardDashboard() {
                     </p>
                   </div>
                 ) : (
-                  <div className="bg-white/95 border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
-                    <div className="overflow-x-auto max-h-[28rem]">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold sticky top-0">
-                          <tr>
-                            <th className="p-3.5">Name</th>
-                            <th className="p-3.5">Birthday</th>
-                            <th className="p-3.5">When</th>
-                            <th className="p-3.5">Phone</th>
-                            <th className="p-3.5 text-right">Reach Out</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {data.upcomingBirthdays.celebrants.map((c) => {
-                            const cleanPhone = (c.phone || '').replace(/\D/g, '');
-                            const intlPhone = cleanPhone.startsWith('0') ? `234${cleanPhone.slice(1)}` : cleanPhone;
-                            const msg = encodeURIComponent(
-                              `Happy Birthday ${c.fullName}! Wishing you God's abundant grace and joy from RCCG Jesus Covenant Zone!`
-                            );
+                  <>
+                    {/* Mobile Cards (< sm) */}
+                    <div className="block sm:hidden space-y-2.5">
+                      {data.upcomingBirthdays.celebrants.map((c) => {
+                        const cleanPhone = (c.phone || '').replace(/\D/g, '');
+                        const intlPhone = cleanPhone.startsWith('0') ? `234${cleanPhone.slice(1)}` : cleanPhone;
+                        const msg = encodeURIComponent(
+                          `Happy Birthday ${c.fullName}! Wishing you God's abundant grace and joy from RCCG Jesus Covenant Zone!`
+                        );
 
-                            return (
-                              <tr key={c.personId} className="hover:bg-slate-50/80 transition-colors">
-                                <td className="p-3.5 font-bold text-slate-900">{c.fullName}</td>
-                                <td className="p-3.5 font-semibold text-slate-700">{c.birthDateFormatted}</td>
-                                <td className="p-3.5">
-                                  {c.isToday ? (
-                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                      Today
-                                    </span>
-                                  ) : c.isTomorrow ? (
-                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                      Tomorrow
-                                    </span>
-                                  ) : (
-                                    <span className="text-slate-500 font-medium">In {c.daysUntil} days</span>
+                        return (
+                          <div
+                            key={c.personId}
+                            className="bg-white/95 border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-slate-900 truncate">{c.fullName}</p>
+                                <p className="text-xs font-semibold text-slate-700 mt-0.5">
+                                  {c.birthDateFormatted}
+                                  {c.phone && (
+                                    <span className="font-mono text-slate-500 font-normal"> &bull; {c.phone}</span>
                                   )}
-                                </td>
-                                <td className="p-3.5 font-mono text-slate-600">{c.phone}</td>
-                                <td className="p-3.5 text-right">
-                                  {cleanPhone.length >= 7 ? (
-                                    <div className="inline-flex items-center gap-1.5">
-                                      <a
-                                        href={`https://wa.me/${intlPhone}?text=${msg}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] inline-flex items-center gap-1 active:scale-[0.97]"
-                                      >
-                                        <MessageCircle className="w-3 h-3" />
-                                        <span>WhatsApp</span>
-                                      </a>
-                                      <a
-                                        href={`tel:${c.phone}`}
-                                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold text-[11px] inline-flex items-center gap-1 active:scale-[0.97]"
-                                      >
-                                        <Phone className="w-3 h-3" />
-                                        <span>Call</span>
-                                      </a>
-                                    </div>
-                                  ) : (
-                                    <span className="text-slate-400">—</span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
+                                </p>
+                              </div>
+                              {c.isToday ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                  Today
+                                </span>
+                              ) : c.isTomorrow ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
+                                  Tomorrow
+                                </span>
+                              ) : (
+                                <span className="text-xs text-slate-500 font-medium shrink-0">In {c.daysUntil} days</span>
+                              )}
+                            </div>
+
+                            {cleanPhone.length >= 7 && (
+                              <div className="flex items-center gap-2">
+                                <a
+                                  href={`https://wa.me/${intlPhone}?text=${msg}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="min-h-[44px] flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 active:scale-[0.97]"
+                                >
+                                  <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                                  <span>WhatsApp</span>
+                                </a>
+                                <a
+                                  href={`tel:${c.phone}`}
+                                  className="min-h-[44px] flex-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-[0.97]"
+                                >
+                                  <Phone className="w-3.5 h-3.5 shrink-0" />
+                                  <span>Call</span>
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
+
+                    {/* Desktop Table (sm+) */}
+                    <div className="hidden sm:block bg-white/95 border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+                      <div className="overflow-x-auto max-h-[28rem]">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold sticky top-0">
+                            <tr>
+                              <th className="p-3.5">Name</th>
+                              <th className="p-3.5">Birthday</th>
+                              <th className="p-3.5">When</th>
+                              <th className="p-3.5">Phone</th>
+                              <th className="p-3.5 text-right">Reach Out</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {data.upcomingBirthdays.celebrants.map((c) => {
+                              const cleanPhone = (c.phone || '').replace(/\D/g, '');
+                              const intlPhone = cleanPhone.startsWith('0') ? `234${cleanPhone.slice(1)}` : cleanPhone;
+                              const msg = encodeURIComponent(
+                                `Happy Birthday ${c.fullName}! Wishing you God's abundant grace and joy from RCCG Jesus Covenant Zone!`
+                              );
+
+                              return (
+                                <tr key={c.personId} className="hover:bg-slate-50/80 transition-colors">
+                                  <td className="p-3.5 font-bold text-slate-900">{c.fullName}</td>
+                                  <td className="p-3.5 font-semibold text-slate-700">{c.birthDateFormatted}</td>
+                                  <td className="p-3.5">
+                                    {c.isToday ? (
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        Today
+                                      </span>
+                                    ) : c.isTomorrow ? (
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                        Tomorrow
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-500 font-medium">In {c.daysUntil} days</span>
+                                    )}
+                                  </td>
+                                  <td className="p-3.5 font-mono text-slate-600">{c.phone}</td>
+                                  <td className="p-3.5 text-right">
+                                    {cleanPhone.length >= 7 ? (
+                                      <div className="inline-flex items-center gap-1.5">
+                                        <a
+                                          href={`https://wa.me/${intlPhone}?text=${msg}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] inline-flex items-center gap-1 active:scale-[0.97]"
+                                        >
+                                          <MessageCircle className="w-3 h-3" />
+                                          <span>WhatsApp</span>
+                                        </a>
+                                        <a
+                                          href={`tel:${c.phone}`}
+                                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold text-[11px] inline-flex items-center gap-1 active:scale-[0.97]"
+                                        >
+                                          <Phone className="w-3 h-3" />
+                                          <span>Call</span>
+                                        </a>
+                                      </div>
+                                    ) : (
+                                      <span className="text-slate-400">—</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             )}

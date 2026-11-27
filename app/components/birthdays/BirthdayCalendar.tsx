@@ -72,28 +72,28 @@ export default function BirthdayCalendar({
   return (
     <section
       aria-label="Birthday Calendar"
-      className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs"
+      className="w-full min-w-0 bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs"
     >
       {/* Month Navigation */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <button
           type="button"
           onClick={onPrevMonth}
-          className="w-11 h-11 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 flex items-center justify-center transition-colors active:scale-[0.97]"
+          className="w-11 h-11 shrink-0 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 flex items-center justify-center transition-colors active:scale-[0.97]"
           aria-label="Previous month"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
 
-        <div className="flex flex-col items-center">
-          <h2 className="text-sm font-bold text-slate-900">
+        <div className="flex flex-col items-center min-w-0">
+          <h2 className="text-sm font-bold text-slate-900 truncate">
             {MONTH_NAMES[viewMonth - 1]} {viewYear}
           </h2>
           {!isViewingCurrentMonth && (
             <button
               type="button"
               onClick={onResetToToday}
-              className="text-[11px] font-semibold text-blue-700 hover:text-blue-900 underline underline-offset-2"
+              className="text-xs font-semibold text-blue-700 hover:text-blue-900 underline underline-offset-2 py-1 px-2 min-h-[32px]"
             >
               Jump to today
             </button>
@@ -103,7 +103,7 @@ export default function BirthdayCalendar({
         <button
           type="button"
           onClick={onNextMonth}
-          className="w-11 h-11 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 flex items-center justify-center transition-colors active:scale-[0.97]"
+          className="w-11 h-11 shrink-0 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 flex items-center justify-center transition-colors active:scale-[0.97]"
           aria-label="Next month"
         >
           <ChevronRight className="w-4 h-4" />
@@ -115,7 +115,7 @@ export default function BirthdayCalendar({
         {WEEKDAYS.map((wd) => (
           <div
             key={wd}
-            className="h-7 flex items-center justify-center text-[11px] font-semibold text-slate-600"
+            className="h-7 flex items-center justify-center text-xs font-semibold text-slate-600"
           >
             {wd}
           </div>
@@ -146,7 +146,7 @@ export default function BirthdayCalendar({
                   ? `${bCount} birthday${bCount > 1 ? 's' : ''} on ${MONTH_NAMES[viewMonth - 1]} ${d}`
                   : `${MONTH_NAMES[viewMonth - 1]} ${d}`
               }
-              className={`relative h-11 rounded-xl text-xs font-semibold flex flex-col items-center justify-center transition-colors active:scale-[0.97] ${
+              className={`relative h-11 min-w-0 rounded-xl text-xs font-semibold flex flex-col items-center justify-center transition-colors active:scale-[0.97] ${
                 isSelected
                   ? 'bg-slate-900 text-white'
                   : hasBirthdays
@@ -170,7 +170,7 @@ export default function BirthdayCalendar({
       </div>
 
       {/* Legend */}
-      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-700 font-medium">
+      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-700 font-medium">
         <span className="inline-flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
           Birthday

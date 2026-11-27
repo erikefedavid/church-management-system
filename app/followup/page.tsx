@@ -239,8 +239,8 @@ export default function FollowUpDashboardPage() {
         />
 
         {/* Active Filter Queue Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+          <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-sm font-extrabold text-slate-950">
               {activeFilter === 'ALL' && 'All Absent Members & First-Timers'}
               {activeFilter === 'MISSED_1_WEEK' && 'Missed 1 Sunday'}
@@ -309,17 +309,22 @@ export default function FollowUpDashboardPage() {
 
       {/* Footer Nav */}
       <footer className="w-full border-t border-slate-200 bg-white py-4 mt-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-900">RCCG Jesus Covenant Zone</span>
-            <span>•</span>
-            <span>Zero-Forgotten-Member Follow-Up Engine</span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col gap-2 text-xs text-slate-600">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-center">
+              <span className="font-bold text-slate-900">RCCG Jesus Covenant Zone</span>
+              <span>•</span>
+              <span>Zero-Forgotten-Member Follow-Up Engine</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link href="/" className="hover:text-slate-950 font-bold hover:underline min-h-[44px] inline-flex items-center px-2">
+                Back to Home
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/" className="hover:text-slate-950 font-bold hover:underline">
-              Back to Home
-            </Link>
-          </div>
+          <p className="text-xs italic text-slate-500 text-center">
+            &ldquo;Be sure you know the condition of your flocks...&rdquo; — Proverbs 27:23
+          </p>
         </div>
       </footer>
     </div>

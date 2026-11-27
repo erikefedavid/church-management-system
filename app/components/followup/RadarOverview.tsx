@@ -59,12 +59,12 @@ export default function RadarOverview({
   return (
     <section className="w-full">
       {/* Filter Switcher Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2 flex-wrap">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
             Follow-Up Radar
           </h2>
-          <span className="text-[11px] text-slate-600">
+          <span className="text-xs text-slate-600">
             ({metrics.totalActiveMembers} total members)
           </span>
         </div>
@@ -106,7 +106,7 @@ export default function RadarOverview({
                 <div className={`w-9 h-9 rounded-xl ${card.accentBg} flex items-center justify-center shrink-0`}>
                   <Icon className={`w-5 h-5 ${card.accentColor}`} />
                 </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${card.badgeClass}`}>
+                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${card.badgeClass}`}>
                   {card.badgeText}
                 </span>
               </div>
@@ -115,12 +115,12 @@ export default function RadarOverview({
                 <span className="text-2xl font-black text-slate-950 tracking-tight">
                   {card.count}
                 </span>
-                <span className="text-xs font-bold text-slate-800">
+                <span className="text-sm font-bold text-slate-800">
                   {card.label}
                 </span>
               </div>
 
-              <p className="text-[11px] text-slate-600 leading-snug">
+              <p className="text-xs text-slate-600 leading-snug">
                 {card.description}
               </p>
             </motion.button>

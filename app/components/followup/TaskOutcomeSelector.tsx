@@ -63,11 +63,11 @@ export default function TaskOutcomeSelector({
 
   return (
     <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3 pt-3 border-t border-slate-200">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
+      <div className="flex flex-wrap items-center justify-between gap-1">
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
           Record Follow-Up Call Outcome:
         </span>
-        <span className="text-[10px] text-slate-600">
+        <span className="text-xs text-slate-600">
           Caller: <strong className="text-slate-950">{callerName || 'Volunteer'}</strong>
         </span>
       </div>
@@ -103,14 +103,14 @@ export default function TaskOutcomeSelector({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Call note (e.g. Navigating exams, requested prayer for strength)..."
-          className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-950 placeholder:text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-hidden min-h-[44px]"
+          className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm sm:text-xs text-slate-950 placeholder:text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-hidden min-h-[44px]"
         />
 
         <motion.button
           {...tactileTapProps}
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-950 hover:bg-slate-900 text-white text-xs font-bold shadow-xs disabled:opacity-50 min-h-[44px] shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-950 hover:bg-slate-900 text-white text-sm sm:text-xs font-bold shadow-xs disabled:opacity-50 min-h-[44px] shrink-0"
         >
           {isSubmitting ? (
             <span className="inline-flex items-center gap-2">

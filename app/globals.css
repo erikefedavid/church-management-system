@@ -31,15 +31,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Slick Minimal Scrollbar */
+/* Ultra-slim Minimal Scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-button {
@@ -53,12 +53,11 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
+  background-color: rgba(148, 163, 184, 0.25);
   border-radius: 9999px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+  border: none;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #94a3b8;
+  background-color: rgba(100, 116, 139, 0.5);
 }

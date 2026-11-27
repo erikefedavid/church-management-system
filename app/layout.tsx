@@ -17,8 +17,9 @@ export const metadata: Metadata = {
   description:
     "Youth Fellowship attendance, follow-up, and birthday care portal for RCCG Jesus Covenant Zone.",
   icons: {
-    icon: "/rccg-logo.png",
-    apple: "/rccg-logo.png",
+    icon: [{ url: "/icon.png", type: "image/png" }],
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 

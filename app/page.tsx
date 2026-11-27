@@ -314,6 +314,9 @@ export default function LandingPage() {
                 <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">
                   Weekly Fellowship Times
                 </h2>
+                <p className="text-xs italic text-slate-500 mt-1">
+                  &ldquo;Let us not neglect meeting together...&rdquo; &mdash; Hebrews 10:25
+                </p>
               </div>
               <div className="flex items-center gap-3 self-start sm:self-center">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0">

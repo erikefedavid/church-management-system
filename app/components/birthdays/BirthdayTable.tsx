@@ -38,80 +38,138 @@ export default function BirthdayTable({
           <p className="text-xs font-medium text-slate-700">{emptyMessage}</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200/80 bg-slate-50/70">
-                <th className="py-2.5 px-4 sm:px-5 text-[11px] font-bold uppercase tracking-wider text-slate-700">
-                  Name
-                </th>
-                <th className="py-2.5 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700">
-                  Date
-                </th>
-                <th className="py-2.5 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700">
-                  Phone Number
-                </th>
-                <th className="py-2.5 px-4 sm:px-5 text-[11px] font-bold uppercase tracking-wider text-slate-700 text-right">
-                  Contact
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {celebrants.map((c) => (
-                <tr key={c.personId} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3 px-4 sm:px-5">
+        <>
+          {/* Mobile Cards (< sm) */}
+          <div className="block sm:hidden divide-y divide-slate-100">
+            {celebrants.map((c) => (
+              <div key={c.personId} className="p-4 flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-slate-900">
+                      <span className="text-base font-bold text-slate-900 leading-snug">
                         {c.fullName}
                       </span>
                       {c.isToday && (
-                        <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200">
+                        <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200">
                           Today
                         </span>
                       )}
                       {c.isTomorrow && (
-                        <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                        <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
                           Tomorrow
                         </span>
                       )}
                     </div>
-                  </td>
-
-                  <td className="py-3 px-4 text-xs font-semibold text-slate-800 whitespace-nowrap">
-                    {c.birthDateFormatted}
-                  </td>
-
-                  <td className="py-3 px-4 text-xs font-medium text-slate-800 whitespace-nowrap tabular-nums">
-                    {c.formattedPhone || c.phone}
-                  </td>
-
-                  <td className="py-3 px-4 sm:px-5 text-right">
-                    <div className="inline-flex items-center justify-end gap-1.5">
-                      <a
-                        href={c.waMeGreetingUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="h-11 px-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-semibold transition-colors active:scale-[0.97]"
-                        aria-label={`WhatsApp ${c.fullName}`}
-                      >
-                        <MessageCircle className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">WhatsApp</span>
-                      </a>
-                      <a
-                        href={`tel:${c.phone}`}
-                        className="h-11 px-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-semibold transition-colors active:scale-[0.97]"
-                        aria-label={`Call ${c.fullName}`}
-                      >
-                        <Phone className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Call</span>
-                      </a>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-700">
+                      <span className="font-semibold text-slate-900">{c.birthDateFormatted}</span>
+                      <span className="text-slate-400">•</span>
+                      <span className="font-medium text-slate-800 tabular-nums">
+                        {c.formattedPhone || c.phone}
+                      </span>
                     </div>
-                  </td>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <a
+                    href={c.waMeGreetingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-11 px-3 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-semibold transition-colors active:scale-[0.97]"
+                    aria-label={`WhatsApp ${c.fullName}`}
+                  >
+                    <MessageCircle className="w-4 h-4 shrink-0" />
+                    <span>WhatsApp</span>
+                  </a>
+                  <a
+                    href={`tel:${c.phone}`}
+                    className="h-11 px-3 inline-flex items-center justify-center gap-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-semibold transition-colors active:scale-[0.97]"
+                    aria-label={`Call ${c.fullName}`}
+                  >
+                    <Phone className="w-4 h-4 shrink-0" />
+                    <span>Call</span>
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop / Tablet Table (sm:+) */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200/80 bg-slate-50/70">
+                  <th className="py-2.5 px-4 sm:px-5 text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                    Name
+                  </th>
+                  <th className="py-2.5 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                    Date
+                  </th>
+                  <th className="py-2.5 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                    Phone Number
+                  </th>
+                  <th className="py-2.5 px-4 sm:px-5 text-[11px] font-bold uppercase tracking-wider text-slate-700 text-right">
+                    Contact
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {celebrants.map((c) => (
+                  <tr key={c.personId} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-3 px-4 sm:px-5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-slate-900">
+                          {c.fullName}
+                        </span>
+                        {c.isToday && (
+                          <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200">
+                            Today
+                          </span>
+                        )}
+                        {c.isTomorrow && (
+                          <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                            Tomorrow
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    <td className="py-3 px-4 text-xs font-semibold text-slate-800 whitespace-nowrap">
+                      {c.birthDateFormatted}
+                    </td>
+
+                    <td className="py-3 px-4 text-xs font-medium text-slate-800 whitespace-nowrap tabular-nums">
+                      {c.formattedPhone || c.phone}
+                    </td>
+
+                    <td className="py-3 px-4 sm:px-5 text-right">
+                      <div className="inline-flex items-center justify-end gap-1.5">
+                        <a
+                          href={c.waMeGreetingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-11 px-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-semibold transition-colors active:scale-[0.97]"
+                          aria-label={`WhatsApp ${c.fullName}`}
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          <span>WhatsApp</span>
+                        </a>
+                        <a
+                          href={`tel:${c.phone}`}
+                          className="h-11 px-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-semibold transition-colors active:scale-[0.97]"
+                          aria-label={`Call ${c.fullName}`}
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          <span>Call</span>
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </section>
   );

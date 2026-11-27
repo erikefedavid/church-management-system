@@ -298,21 +298,21 @@ export default function BirthdayDashboardPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
                     <a
                       href={c.waMeGreetingUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="h-11 px-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-semibold transition-colors active:scale-[0.97]"
                     >
-                      <MessageCircle className="w-3.5 h-3.5" />
+                      <MessageCircle className="w-4 h-4 shrink-0" />
                       <span>WhatsApp</span>
                     </a>
                     <a
                       href={`tel:${c.phone}`}
                       className="h-11 px-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-semibold transition-colors active:scale-[0.97]"
                     >
-                      <Phone className="w-3.5 h-3.5" />
+                      <Phone className="w-4 h-4 shrink-0" />
                       <span>Call</span>
                     </a>
                   </div>
@@ -345,62 +345,106 @@ export default function BirthdayDashboardPage() {
                 No birthdays recorded for {nextMonthName}.
               </p>
             ) : (
-              <div className="bg-white rounded-xl border border-blue-200/80 overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-200/80 bg-slate-50/70">
-                      <th className="py-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700">
-                        Name
-                      </th>
-                      <th className="py-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700">
-                        Date
-                      </th>
-                      <th className="py-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700">
-                        Phone Number
-                      </th>
-                      <th className="py-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700 text-right">
-                        Contact
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {nextMonthCelebrants.map((c) => (
-                      <tr key={c.personId} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-2.5 px-4 text-sm font-semibold text-slate-900">
+              <div className="bg-white rounded-xl border border-blue-200/80 overflow-hidden">
+                {/* Mobile Cards (< sm) */}
+                <div className="block sm:hidden divide-y divide-slate-100">
+                  {nextMonthCelebrants.map((c) => (
+                    <div key={c.personId} className="p-4 flex flex-col gap-3">
+                      <div className="min-w-0">
+                        <div className="text-base font-bold text-slate-900 leading-snug">
                           {c.fullName}
-                        </td>
-                        <td className="py-2.5 px-4 text-xs font-semibold text-slate-800 whitespace-nowrap">
-                          {c.birthDateFormatted}
-                        </td>
-                        <td className="py-2.5 px-4 text-xs font-medium text-slate-800 whitespace-nowrap tabular-nums">
-                          {c.formattedPhone || c.phone}
-                        </td>
-                        <td className="py-2.5 px-4 text-right">
-                          <div className="inline-flex items-center justify-end gap-1.5">
-                            <a
-                              href={c.waMeGreetingUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="h-10 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-semibold transition-colors"
-                              aria-label={`WhatsApp ${c.fullName}`}
-                            >
-                              <MessageCircle className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">WhatsApp</span>
-                            </a>
-                            <a
-                              href={`tel:${c.phone}`}
-                              className="h-10 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-semibold transition-colors"
-                              aria-label={`Call ${c.fullName}`}
-                            >
-                              <Phone className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">Call</span>
-                            </a>
-                          </div>
-                        </td>
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-700">
+                          <span className="font-semibold text-slate-900">{c.birthDateFormatted}</span>
+                          <span className="text-slate-400">•</span>
+                          <span className="font-medium text-slate-800 tabular-nums">
+                            {c.formattedPhone || c.phone}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <a
+                          href={c.waMeGreetingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-11 px-3 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-semibold transition-colors active:scale-[0.97]"
+                          aria-label={`WhatsApp ${c.fullName}`}
+                        >
+                          <MessageCircle className="w-4 h-4 shrink-0" />
+                          <span>WhatsApp</span>
+                        </a>
+                        <a
+                          href={`tel:${c.phone}`}
+                          className="h-11 px-3 inline-flex items-center justify-center gap-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-semibold transition-colors active:scale-[0.97]"
+                          aria-label={`Call ${c.fullName}`}
+                        >
+                          <Phone className="w-4 h-4 shrink-0" />
+                          <span>Call</span>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop / Tablet Table (sm:+) */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200/80 bg-slate-50/70">
+                        <th className="py-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                          Name
+                        </th>
+                        <th className="py-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                          Date
+                        </th>
+                        <th className="py-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                          Phone Number
+                        </th>
+                        <th className="py-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700 text-right">
+                          Contact
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {nextMonthCelebrants.map((c) => (
+                        <tr key={c.personId} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="py-2.5 px-4 text-sm font-semibold text-slate-900">
+                            {c.fullName}
+                          </td>
+                          <td className="py-2.5 px-4 text-xs font-semibold text-slate-800 whitespace-nowrap">
+                            {c.birthDateFormatted}
+                          </td>
+                          <td className="py-2.5 px-4 text-xs font-medium text-slate-800 whitespace-nowrap tabular-nums">
+                            {c.formattedPhone || c.phone}
+                          </td>
+                          <td className="py-2.5 px-4 text-right">
+                            <div className="inline-flex items-center justify-end gap-1.5">
+                              <a
+                                href={c.waMeGreetingUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="h-11 px-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-semibold transition-colors"
+                                aria-label={`WhatsApp ${c.fullName}`}
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                                <span>WhatsApp</span>
+                              </a>
+                              <a
+                                href={`tel:${c.phone}`}
+                                className="h-11 px-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-semibold transition-colors"
+                                aria-label={`Call ${c.fullName}`}
+                              >
+                                <Phone className="w-3.5 h-3.5" />
+                                <span>Call</span>
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </section>
@@ -442,12 +486,12 @@ export default function BirthdayDashboardPage() {
                       : `No birthdays in ${MONTH_NAMES[viewMonth - 1]}.`
                 }
                 headerAction={
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {selectedDay && (
                       <button
                         type="button"
                         onClick={() => setSelectedDay(null)}
-                        className="h-9 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800 transition-colors"
+                        className="h-11 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800 transition-colors"
                       >
                         Clear day
                       </button>
@@ -456,7 +500,7 @@ export default function BirthdayDashboardPage() {
                       <button
                         type="button"
                         onClick={() => setShowAllMonths((v) => !v)}
-                        className={`h-9 px-3 rounded-lg border text-xs font-semibold transition-colors ${
+                        className={`h-11 px-3.5 rounded-xl border text-xs font-semibold transition-colors ${
                           showAllMonths
                             ? 'bg-slate-900 text-white border-slate-900'
                             : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
@@ -472,6 +516,12 @@ export default function BirthdayDashboardPage() {
           </div>
         )}
       </main>
+
+      <footer className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-4 text-center">
+        <p className="text-xs italic text-slate-500">
+          &ldquo;The LORD bless you and keep you...&rdquo; — Numbers 6:24
+        </p>
+      </footer>
     </div>
   );
 }

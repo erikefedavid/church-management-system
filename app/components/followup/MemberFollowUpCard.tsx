@@ -181,18 +181,18 @@ export default function MemberFollowUpCard({
               <h3 className="text-base font-extrabold text-slate-950 leading-tight">
                 {member.fullName}
               </h3>
-              <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${currentBadge.bg} ${currentBadge.text}`}>
+              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${currentBadge.bg} ${currentBadge.text}`}>
                 {currentBadge.label}
               </span>
             </div>
 
-            <div className="flex items-center gap-3 text-xs text-slate-700 mt-1 flex-wrap">
+            <div className="flex items-center gap-x-3 gap-y-1 text-sm sm:text-xs text-slate-700 mt-1 flex-wrap">
               <span className="font-semibold text-slate-900 font-mono">
                 {member.phone}
               </span>
               <span className="text-slate-500">•</span>
-              <span className="inline-flex items-center gap-1 text-[11px]">
-                <Calendar className="w-3 h-3 text-slate-700" />
+              <span className="inline-flex items-center gap-1 text-xs">
+                <Calendar className="w-3.5 h-3.5 text-slate-700 shrink-0" />
                 Last in church: <strong className="text-slate-900">{member.lastAttendanceFormatted}</strong>
               </span>
             </div>
@@ -204,11 +204,11 @@ export default function MemberFollowUpCard({
           <button
             type="button"
             onClick={() => setShowHistory(!showHistory)}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors ml-auto sm:ml-0 min-h-[36px] cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors ml-auto sm:ml-0 min-h-[44px] cursor-pointer"
           >
-            <History className="w-3.5 h-3.5 text-slate-700" />
+            <History className="w-4 h-4 text-slate-700" />
             <span>Past Notes ({member.recentNotes.length})</span>
-            {showHistory ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {showHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         )}
       </div>
@@ -223,16 +223,16 @@ export default function MemberFollowUpCard({
       />
 
       {/* Action Buttons: Send WhatsApp & Call Member */}
-      <div className="flex flex-wrap items-center gap-2.5 pt-1">
+      <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2.5 pt-1">
         {/* 1-Click WhatsApp DM */}
         <motion.a
           {...tactileTapProps}
           href={liveWaMeUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs min-h-[44px] cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm sm:text-xs font-bold shadow-xs min-h-[44px] cursor-pointer"
         >
-          <MessageSquare className="w-4 h-4" />
+          <MessageSquare className="w-4 h-4 shrink-0" />
           <span>Send WhatsApp DM</span>
         </motion.a>
 
@@ -240,9 +240,9 @@ export default function MemberFollowUpCard({
         <motion.a
           {...tactileTapProps}
           href={telUrl}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold shadow-xs min-h-[44px] cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-sm sm:text-xs font-bold shadow-xs min-h-[44px] cursor-pointer"
         >
-          <Phone className="w-4 h-4" />
+          <Phone className="w-4 h-4 shrink-0" />
           <span>Call Member</span>
         </motion.a>
       </div>
@@ -257,7 +257,7 @@ export default function MemberFollowUpCard({
             transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
             className="overflow-hidden bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2 origin-top"
           >
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
               Past Call & Contact Log (Reported to Youth President):
             </span>
             <div className="space-y-1.5">
@@ -266,7 +266,7 @@ export default function MemberFollowUpCard({
                   key={note.id}
                   className="bg-white p-2.5 rounded-lg border border-slate-200/80 text-xs flex flex-col gap-1"
                 >
-                  <div className="flex items-center justify-between text-[11px]">
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
                     <span className="font-bold text-slate-900">{note.outcome}</span>
                     <span className="text-slate-700">{note.date} • {note.callerName}</span>
                   </div>

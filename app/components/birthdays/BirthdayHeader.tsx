@@ -50,39 +50,39 @@ export default function BirthdayHeader({
 
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
                 Birthdays
               </span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                <Clock className="w-2.5 h-2.5" />
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <Clock className="w-3 h-3 shrink-0" />
                 {watTimeFormatted}
               </span>
             </div>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 leading-tight truncate">
+            <h1 className="text-base sm:text-xl font-bold tracking-tight text-slate-900 leading-tight truncate">
               {churchName}
             </h1>
           </div>
         </div>
 
         {/* Search & Refresh */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          <div className="relative flex-1 md:w-52 lg:w-64">
+        <div className="flex items-center gap-2.5 w-full md:w-auto min-w-0 shrink-0">
+          <div className="relative flex-1 min-w-0 md:w-52 lg:w-64">
             <Search className="w-4 h-4 text-slate-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search name or phone..."
-              className="w-full h-11 pl-9 pr-9 text-xs font-medium rounded-xl border border-slate-200 bg-slate-50/60 text-slate-900 placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-slate-900/15 focus:border-slate-900 focus:bg-white transition-all"
+              className="w-full h-11 pl-9 pr-11 text-sm sm:text-xs font-medium rounded-xl border border-slate-200 bg-slate-50/60 text-slate-900 placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-slate-900/15 focus:border-slate-900 focus:bg-white transition-all"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => onSearchChange('')}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-600 hover:text-slate-900 rounded-lg"
+                className="absolute right-0 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-600 hover:text-slate-900 rounded-xl"
                 aria-label="Clear search"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -92,10 +92,10 @@ export default function BirthdayHeader({
             type="button"
             onClick={onRefresh}
             disabled={isLoading}
-            className="h-11 px-3.5 inline-flex items-center justify-center gap-1.5 rounded-xl text-xs font-semibold text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs disabled:opacity-50 transition-colors shrink-0"
+            className="h-11 min-w-[44px] px-3.5 inline-flex items-center justify-center gap-1.5 rounded-xl text-xs font-semibold text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs disabled:opacity-50 transition-colors shrink-0"
             aria-label="Refresh birthdays"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Refresh</span>
           </motion.button>
         </div>
