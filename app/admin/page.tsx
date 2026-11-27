@@ -83,8 +83,10 @@ export default function AdminScorecardDashboard() {
   const [locRadius, setLocRadius] = useState('150');
   const [locSaving, setLocSaving] = useState(false);
   const [locDetecting, setLocDetecting] = useState(false);
+  const [locStatusMsg, setLocStatusMsg] = useState<{ type: 'info' | 'error'; text: string } | null>(null);
 
   async function openLocationModal() {
+    setLocStatusMsg(null);
     setShowLocationModal(true);
     const res = await getChurchLocationAction();
     if (res.success && res.latitude !== undefined && res.longitude !== undefined) {
@@ -96,25 +98,65 @@ export default function AdminScorecardDashboard() {
 
   function handleDetectCurrentGps() {
     if (typeof window === 'undefined' || !navigator.geolocation) {
-      setToast({ type: 'error', message: 'Geolocation is not available on this device.' });
+      const msg = 'Geolocation is not available on this device.';
+      setLocStatusMsg({ type: 'error', text: msg });
+      setToast({ type: 'error', message: msg });
       return;
     }
+
     setLocDetecting(true);
+    setLocStatusMsg(null);
+    let settled = false;
+
+    const onSuccess = (pos: GeolocationPosition) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(hardTimer);
+      setLocLat(pos.coords.latitude.toFixed(6));
+      setLocLng(pos.coords.longitude.toFixed(6));
+      setLocDetecting(false);
+      const msg = `Detected location (±${Math.round(pos.coords.accuracy)}m accuracy). Click Save Location to apply.`;
+      setLocStatusMsg({ type: 'info', text: msg });
+      setToast({ type: 'info', message: msg });
+    };
+
+    const onFail = (msg: string) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(hardTimer);
+      setLocDetecting(false);
+      setLocStatusMsg({ type: 'error', text: msg });
+      setToast({ type: 'error', message: msg });
+    };
+
+    const hardTimer = window.setTimeout(() => {
+      onFail('Location request timed out. Enable Location in your browser/device or paste coordinates from Google Maps.');
+    }, 12500);
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocLat(pos.coords.latitude.toFixed(6));
-        setLocLng(pos.coords.longitude.toFixed(6));
-        setLocDetecting(false);
-        setToast({
-          type: 'info',
-          message: `Detected GPS (±${Math.round(pos.coords.accuracy)}m accuracy). Click Save Location to apply.`,
-        });
+      onSuccess,
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          onFail('Location permission was denied. Allow location access in your browser settings and try again.');
+          return;
+        }
+        if (err.code === err.TIMEOUT) {
+          navigator.geolocation.getCurrentPosition(
+            onSuccess,
+            (fallbackErr) => {
+              if (fallbackErr.code === fallbackErr.PERMISSION_DENIED) {
+                onFail('Location permission was denied. Allow location access in your browser settings.');
+              } else {
+                onFail('Could not read GPS/network location. Enable Location or paste Google Maps coordinates.');
+              }
+            },
+            { enableHighAccuracy: false, timeout: 5000, maximumAge: 30000 }
+          );
+          return;
+        }
+        onFail('Could not read GPS. Check browser/device location permission.');
       },
-      () => {
-        setLocDetecting(false);
-        setToast({ type: 'error', message: 'Could not read GPS. Check browser location permission.' });
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 7000, maximumAge: 15000 }
     );
   }
 
@@ -420,6 +462,18 @@ export default function AdminScorecardDashboard() {
             >
               {locDetecting ? 'Reading GPS...' : 'Use My Current GPS Location'}
             </button>
+
+            {locStatusMsg && (
+              <p
+                className={`text-xs font-medium rounded-xl px-3 py-2 border ${
+                  locStatusMsg.type === 'error'
+                    ? 'bg-rose-50 text-rose-800 border-rose-200'
+                    : 'bg-blue-50 text-blue-800 border-blue-200'
+                }`}
+              >
+                {locStatusMsg.text}
+              </p>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <div>
