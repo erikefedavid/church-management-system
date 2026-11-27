@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { animate, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, animate, motion, useReducedMotion } from 'framer-motion';
 import {
   MapPin,
   Users,
@@ -51,6 +51,25 @@ const WEEKLY_SCHEDULE = [
     service: 'Hour of Mercy',
     time: '08:00 AM – 09:00 AM',
     note: 'Monthly covenant prayer hour',
+  },
+];
+
+const HERO_SLIDES = [
+  {
+    src: '/images/hero-slide-1.jpg',
+    alt: 'Youth members lifting hands in worship inside the RCCG Jesus Covenant Zone sanctuary',
+  },
+  {
+    src: '/images/hero-slide-2.png',
+    alt: 'Young worship leader ministering from the podium at RCCG Jesus Covenant Zone',
+  },
+  {
+    src: '/images/hero-slide-3.png',
+    alt: 'Youth member praying by the sanctuary window before service',
+  },
+  {
+    src: '/images/hero-slide-4.png',
+    alt: 'Youth chorister leading praise in the sanctuary',
   },
 ];
 
@@ -137,6 +156,15 @@ function AnimatedDigit({
 
 export default function LandingPage() {
   const shouldReduceMotion = useReducedMotion();
+  const [heroSlideIdx, setHeroSlideIdx] = useState(0);
+
+  useEffect(() => {
+    if (shouldReduceMotion) return;
+    const timer = window.setInterval(() => {
+      setHeroSlideIdx((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [shouldReduceMotion]);
 
   const fadeUp = (delay = 0) =>
     shouldReduceMotion
@@ -197,19 +225,30 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1">
-        {/* Screen 1: Centered Problem-Solving Hero over Sanctuary Photograph */}
+        {/* Screen 1: Centered Problem-Solving Hero over Sanctuary Slideshow */}
         <section className="relative min-h-screen pt-20 flex items-center justify-center overflow-hidden bg-slate-950">
-          <Image
-            src="/images/sanctuary-hero.jpg"
-            alt="Youth members inside the RCCG Jesus Covenant Zone sanctuary before service"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-          />
+          <AnimatePresence mode="sync">
+            <motion.div
+              key={HERO_SLIDES[heroSlideIdx].src}
+              initial={shouldReduceMotion ? false : { opacity: 0, scale: 1.03 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.7, ease: MOMENTUM_EASE }}
+              className="absolute inset-0"
+            >
+              <Image
+                src={HERO_SLIDES[heroSlideIdx].src}
+                alt={HERO_SLIDES[heroSlideIdx].alt}
+                fill
+                priority={heroSlideIdx === 0}
+                sizes="100vw"
+                className="object-cover object-center"
+              />
+            </motion.div>
+          </AnimatePresence>
           <div
             aria-hidden="true"
-            className="absolute inset-0 bg-slate-950/70"
+            className="absolute inset-0 bg-slate-950/70 z-[1]"
           />
 
           <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center space-y-6">
@@ -333,11 +372,11 @@ export default function LandingPage() {
               >
                 <div className="group relative aspect-[16/10] w-full bg-slate-100 overflow-hidden">
                   <Image
-                    src="/images/followup-call.jpg"
-                    alt="Follow-up team member calling and checking in on a youth member"
+                    src="/images/followup-call.png"
+                    alt="Church worker connecting warmly with a member after service"
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+                    className="object-cover object-top transition-transform duration-300 ease-out group-hover:scale-[1.02]"
                   />
                 </div>
                 <div className="p-6 sm:p-8 space-y-4 flex-1">
@@ -361,11 +400,11 @@ export default function LandingPage() {
               >
                 <div className="group relative aspect-[16/10] w-full bg-slate-100 overflow-hidden">
                   <Image
-                    src="/images/followup-care.jpg"
-                    alt="Youth fellowship celebrating a member birthday together"
+                    src="/images/birthday-care.png"
+                    alt="RCCG Jesus Covenant Zone congregation celebrating a birthday with cake"
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+                    className="object-cover object-center transition-transform duration-300 ease-out group-hover:scale-[1.02]"
                   />
                 </div>
                 <div className="p-6 sm:p-8 space-y-4 flex-1">
