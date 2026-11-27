@@ -172,62 +172,101 @@ export default function MemberCheckInPortal() {
     }
 
     return new Promise((resolve) => {
+      let settled = false;
+
+      const finishWithCoords = (pos: GeolocationPosition) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(hardTimer);
+
+        const coords = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+        };
+        userLocationRef.current = coords;
+        setUserLocation(coords);
+
+        const churchCoords = church
+          ? { latitude: church.latitude, longitude: church.longitude }
+          : { latitude: 6.5244, longitude: 3.3792 };
+        const baseRadius = church?.geofenceRadius || 150;
+
+        const check = isWithinChurchGeofence(coords, churchCoords, baseRadius);
+        setDistanceMeters(check.distanceMeters);
+        setGeoAllowed(check.isAllowed);
+        setGeoChecking(false);
+
+        if (!check.isAllowed) {
+          setGeoErrorType('OUTSIDE');
+        }
+
+        resolve(check.isAllowed);
+      };
+
+      const finishWithError = (type: 'PERMISSION_DENIED' | 'TIMEOUT' | 'POSITION_UNAVAILABLE') => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(hardTimer);
+        setGeoChecking(false);
+        setGeoAllowed(false);
+        setGeoErrorType(type);
+        resolve(false);
+      };
+
+      // Hard safety timeout in case browser geolocation prompt/service stalls
+      const hardTimer = window.setTimeout(() => {
+        finishWithError('TIMEOUT');
+      }, 12500);
+
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const coords = {
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            accuracy: pos.coords.accuracy,
-          };
-          userLocationRef.current = coords;
-          setUserLocation(coords);
-
-          const churchCoords = church
-            ? { latitude: church.latitude, longitude: church.longitude }
-            : { latitude: 6.5244, longitude: 3.3792 };
-          const baseRadius = church?.geofenceRadius || 150;
-
-          const check = isWithinChurchGeofence(coords, churchCoords, baseRadius);
-          setDistanceMeters(check.distanceMeters);
-          setGeoAllowed(check.isAllowed);
-          setGeoChecking(false);
-
-          if (!check.isAllowed) {
-            setGeoErrorType('OUTSIDE');
-          }
-
-          resolve(check.isAllowed);
-        },
+        finishWithCoords,
         (error) => {
-          setGeoChecking(false);
-          setGeoAllowed(false);
           if (error.code === error.PERMISSION_DENIED) {
-            setGeoErrorType('PERMISSION_DENIED');
-          } else if (error.code === error.TIMEOUT) {
-            setGeoErrorType('TIMEOUT');
-          } else {
-            setGeoErrorType('POSITION_UNAVAILABLE');
+            finishWithError('PERMISSION_DENIED');
+            return;
           }
-          resolve(false);
+          // Retry with network/Wi-Fi accuracy indoors if high-accuracy GPS timed out
+          if (error.code === error.TIMEOUT) {
+            navigator.geolocation.getCurrentPosition(
+              finishWithCoords,
+              (fallbackErr) => {
+                if (fallbackErr.code === fallbackErr.PERMISSION_DENIED) {
+                  finishWithError('PERMISSION_DENIED');
+                } else if (fallbackErr.code === fallbackErr.TIMEOUT) {
+                  finishWithError('TIMEOUT');
+                } else {
+                  finishWithError('POSITION_UNAVAILABLE');
+                }
+              },
+              {
+                enableHighAccuracy: false,
+                timeout: 5000,
+                maximumAge: 30000,
+              }
+            );
+            return;
+          }
+          finishWithError('POSITION_UNAVAILABLE');
         },
         {
           enableHighAccuracy: true,
-          timeout: 10000,
+          timeout: 7000,
           maximumAge: 15000,
         }
       );
     });
   }, [church]);
 
-  // Trigger location on mount once church is loaded
+  // Trigger location on mount once service check finishes
   useEffect(() => {
-    if (church) {
+    if (isReady) {
       const timer = setTimeout(() => {
         void requestLocation();
       }, 0);
       return () => clearTimeout(timer);
     }
-  }, [church, requestLocation]);
+  }, [isReady, requestLocation]);
 
   // 3. Complete check-in logic
   const executeCheckIn = useCallback(
