@@ -2,13 +2,12 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { RefreshCw, Search, UserCheck, Clock } from 'lucide-react';
+import { RefreshCw, Search, UserCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { tactileTapProps } from '@/lib/motion';
 
 interface FollowUpHeaderProps {
   churchName?: string;
-  watTimeFormatted?: string;
   callerName: string;
   onCallerNameChange: (name: string) => void;
   onRefresh: () => void;
@@ -19,7 +18,6 @@ interface FollowUpHeaderProps {
 
 export default function FollowUpHeader({
   churchName = 'RCCG Jesus Covenant Zone',
-  watTimeFormatted = 'WAT (UTC+1)',
   callerName,
   onCallerNameChange,
   onRefresh,
@@ -31,8 +29,8 @@ export default function FollowUpHeader({
     <header className="w-full bg-white border-b border-slate-200/90 shadow-2xs">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         {/* Brand Lockup */}
-        <div className="flex items-center gap-3">
-          <div className="relative w-12 h-12 shrink-0 rounded-2xl bg-white p-1 border border-slate-200 shadow-2xs">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative w-11 h-11 shrink-0 rounded-xl bg-white p-1 border border-slate-200 shadow-2xs">
             <Image
               src="/rccg-logo.png"
               alt="RCCG Official Seal"
@@ -42,21 +40,12 @@ export default function FollowUpHeader({
             />
           </div>
           <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                The Redeemed Christian Church of God
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                <Clock className="w-3 h-3 shrink-0" />
-                {watTimeFormatted}
-              </span>
-            </div>
-            <h1 className="text-lg font-extrabold text-slate-950 leading-tight">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-900">
+              Follow-Up
+            </span>
+            <h1 className="text-base sm:text-xl font-bold tracking-tight text-slate-900 leading-tight truncate">
               {churchName}
             </h1>
-            <span className="text-xs font-semibold text-blue-900">
-              Zero-Forgotten-Member Follow-Up Engine
-            </span>
           </div>
         </div>
 

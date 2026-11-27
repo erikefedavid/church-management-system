@@ -34,6 +34,7 @@ interface GeofenceGatewayAlertProps {
     };
   } | null;
   isLiveNow?: boolean;
+  sundayLabel?: string | null;
   churchName?: string;
   distanceMeters: number | null;
   errorType?: 'PERMISSION_DENIED' | 'POSITION_UNAVAILABLE' | 'TIMEOUT' | 'OUTSIDE' | null;
@@ -45,6 +46,7 @@ export default function GeofenceGatewayAlert({
   activeService,
   nextUpcomingService,
   isLiveNow = false,
+  sundayLabel,
   churchName = 'RCCG Jesus Covenant Zone',
   distanceMeters,
   errorType = 'OUTSIDE',
@@ -98,6 +100,11 @@ export default function GeofenceGatewayAlert({
           <h2 className="text-xl font-black text-slate-950 tracking-tight">
             {serviceName}
           </h2>
+          {sundayLabel && displayService && (
+            <p className="text-xs font-semibold text-blue-900">
+              {sundayLabel}
+            </p>
+          )}
           {startTime && endTime && (
             <p className="text-xs text-slate-700 font-semibold flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-slate-500" />

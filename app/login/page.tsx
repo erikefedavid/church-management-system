@@ -115,11 +115,11 @@ export default function StaffLoginPage() {
       {/* Top Bar */}
       <div className="max-w-md w-full mx-auto flex items-center justify-between pt-2 relative z-10">
         <Link
-          href="/checkin"
+          href="/"
           className="text-xs text-slate-600 hover:text-slate-900 font-semibold flex items-center gap-1.5 min-h-[44px] transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Member Check-In</span>
+          <span>Back to Home</span>
         </Link>
         <span className="text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
           Authorized Staff Only

@@ -19,7 +19,7 @@ export default function EscalationBanner({
   return (
     <motion.aside
       {...alertVariants}
-      aria-label="Youth President escalation alert"
+      aria-label="Needs attention alert"
       className="w-full bg-rose-50 border border-rose-200/90 rounded-2xl p-4 shadow-xs"
     >
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -28,16 +28,16 @@ export default function EscalationBanner({
             <ShieldAlert className="w-5 h-5 text-rose-700" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm font-bold text-rose-950">
-                {escalatedCount} Member{escalatedCount > 1 ? 's' : ''} Escalated to Youth President
+                {escalatedCount} {escalatedCount === 1 ? 'Person Needs' : 'People Need'} Attention
               </h3>
               <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-200/80 text-rose-900 px-2 py-0.5 rounded-full">
-                48h SLA Overdue
+                Needs Attention
               </span>
             </div>
             <p className="text-xs text-rose-900 mt-0.5 leading-relaxed">
-              These members missed 2+ weeks or remained uncontacted beyond 48 hours. Direct personal call or welfare visit from the Youth President is recommended.
+              These members missed 2+ weeks or have not been reached in over 48 hours. A personal call or visit from the Youth President is recommended.
             </p>
           </div>
         </div>
@@ -47,7 +47,7 @@ export default function EscalationBanner({
           onClick={onViewEscalated}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold shrink-0 shadow-xs min-h-[44px]"
         >
-          <span>Review Escalations</span>
+          <span>View List</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </motion.button>
       </div>

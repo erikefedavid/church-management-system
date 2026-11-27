@@ -23,6 +23,7 @@ export interface ActiveServiceResult {
   portalSubtitle: string;
   isFirstSunday: boolean;
   isThirdSaturday: boolean;
+  sundayLabel: string | null;
   nextUpcomingService: NextUpcomingService | null;
 }
 
@@ -154,6 +155,48 @@ export function isThirdSaturdayOfMonth(dayOfMonth: number, dayOfWeek: DayOfWeek)
  */
 export function isFridayBeforeThirdSunday(dayOfMonth: number, dayOfWeek: DayOfWeek): boolean {
   return dayOfWeek === DayOfWeek.FRIDAY && dayOfMonth >= 13 && dayOfMonth <= 19;
+}
+
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+/**
+ * Computes a smart label for a Sunday date:
+ * - "1st Sunday · Thanksgiving" (days 1-7)
+ * - "Last Sunday of <Month>" if it is the final Sunday of that month (dayOfMonth + 7 > daysInMonth)
+ * - "2nd Sunday", "3rd Sunday", "4th Sunday" otherwise
+ */
+export function getSmartSundayLabel(year: number, month: number, dayOfMonth: number): string {
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  if (dayOfMonth <= 7) {
+    return '1st Sunday · Thanksgiving';
+  }
+  const weekNum = Math.ceil(dayOfMonth / 7);
+  if (weekNum === 3) {
+    return '3rd Sunday · Youth Sunday';
+  }
+  if (dayOfMonth + 7 > daysInMonth) {
+    const monthName = MONTH_NAMES[month - 1] || '';
+    return monthName ? `Last Sunday of ${monthName}` : 'Last Sunday';
+  }
+  const ordinals: Record<number, string> = {
+    2: '2nd',
+    3: '3rd',
+    4: '4th',
+  };
+  return `${ordinals[weekNum] || `${weekNum}th`} Sunday`;
 }
 
 /**
@@ -342,6 +385,10 @@ export async function getActiveChurchService(
 
   // 2. Compute Next Upcoming Service
   let nextUpcomingService: NextUpcomingService | null = null;
+  let sundayLabel: string | null =
+    currentDay === DayOfWeek.SUNDAY
+      ? getSmartSundayLabel(ngTime.year, ngTime.month, ngTime.dayOfMonth)
+      : null;
 
   // A. Check if there is another service later today
   const upcomingToday = todayServices.find((s) => s.startTime > currentTimeString);
@@ -385,6 +432,16 @@ export async function getActiveChurchService(
           endTime: nextSvc.endTime,
           formattedSchedule: `${dayLabel} at ${formatTime12(nextSvc.startTime)}`,
         };
+        if (!isLiveNow) {
+          sundayLabel =
+            checkDay === DayOfWeek.SUNDAY
+              ? getSmartSundayLabel(
+                  futureDate.getUTCFullYear(),
+                  futureDate.getUTCMonth() + 1,
+                  futureDayOfMonth
+                )
+              : null;
+        }
         break;
       }
     }
@@ -425,6 +482,7 @@ export async function getActiveChurchService(
     portalSubtitle: isLiveNow ? portalSubtitle : 'Attendance Portal (Off-Hours)',
     isFirstSunday,
     isThirdSaturday,
+    sundayLabel,
     nextUpcomingService,
   };
 }

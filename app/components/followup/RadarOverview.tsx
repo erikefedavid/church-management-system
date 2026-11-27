@@ -62,7 +62,7 @@ export default function RadarOverview({
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2 flex-wrap">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-            Follow-Up Radar
+            Follow-Up Overview
           </h2>
           <span className="text-xs text-slate-600">
             ({metrics.totalActiveMembers} total members)

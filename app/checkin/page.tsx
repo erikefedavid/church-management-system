@@ -46,6 +46,7 @@ export default function MemberCheckInPortal() {
   const [activeService, setActiveService] = useState<any>(null);
   const [nextUpcomingService, setNextUpcomingService] = useState<any>(null);
   const [currentTimeString, setCurrentTimeString] = useState<string>('');
+  const [sundayLabel, setSundayLabel] = useState<string | null>(null);
   const [isLiveNow, setIsLiveNow] = useState<boolean>(false);
   const [isReady, setIsReady] = useState(false);
 
@@ -124,6 +125,7 @@ export default function MemberCheckInPortal() {
           setActiveService(res.activeService || null);
           setNextUpcomingService(res.nextUpcomingService || null);
           setCurrentTimeString(res.currentTimeString || '');
+          setSundayLabel(res.sundayLabel || null);
           setIsLiveNow(res.isLiveNow || false);
 
           // Check device attendance lock
@@ -559,6 +561,7 @@ export default function MemberCheckInPortal() {
         churchName={church?.name}
         isLiveNow={isLiveNow}
         activeServiceName={activeService?.name}
+        sundayLabel={sundayLabel}
         currentTimeString={currentTimeString}
         geoAllowed={geoAllowed}
         geoChecking={geoChecking}
@@ -604,6 +607,7 @@ export default function MemberCheckInPortal() {
             activeService={activeService}
             nextUpcomingService={nextUpcomingService}
             isLiveNow={isLiveNow}
+            sundayLabel={sundayLabel}
             churchName={church?.name}
             distanceMeters={distanceMeters}
             errorType={geoErrorType}

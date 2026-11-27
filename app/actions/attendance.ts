@@ -33,6 +33,7 @@ export type ActiveServiceResponse =
       nextUpcomingService?: NextUpcomingService | null;
       isFirstSunday?: boolean;
       isThirdSaturday?: boolean;
+      sundayLabel?: string | null;
       error?: undefined;
     }
   | {

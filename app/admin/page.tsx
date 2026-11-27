@@ -816,7 +816,7 @@ export default function AdminScorecardDashboard() {
                                 {svc.status === 'LIVE'
                                   ? '● Live Now'
                                   : svc.status === 'CONCLUDED'
-                                  ? '✓ Concluded'
+                                  ? '✓ Completed'
                                   : '⏳ Upcoming'}
                               </span>
                             </div>

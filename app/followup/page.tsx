@@ -73,7 +73,7 @@ export default function FollowUpDashboardPage() {
       } else {
         setToast({
           type: 'error',
-          message: res.error || 'Failed to load follow-up radar.',
+          message: res.error || 'Could not load the follow-up list.',
         });
       }
     } catch {
@@ -139,28 +139,33 @@ export default function FollowUpDashboardPage() {
     });
   };
 
-  // 5. Handle Radar Sync / Refresh Trigger
+  // 5. Handle Refresh Trigger
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       const res = await triggerRadarSyncAction();
       if (res.success) {
         setMetrics(res.metrics);
+        const newCount = res.tasksCreated ?? 0;
         setToast({
           type: 'success',
-          message: `Absence radar synced! (${res.tasksCreated} tasks created, ${res.tasksEscalated} escalated).`,
+          title: 'Follow-up list refreshed',
+          message:
+            newCount > 0
+              ? `Found ${newCount} new ${newCount === 1 ? 'person' : 'people'} to follow up with.`
+              : 'Everyone is up to date.',
         });
         await loadDashboardData(activeFilter, searchQuery);
       } else {
         setToast({
           type: 'error',
-          message: res.error || 'Sync failed.',
+          message: res.error || 'Could not refresh the list.',
         });
       }
     } catch {
       setToast({
         type: 'error',
-        message: 'Radar synchronization error.',
+        message: 'Could not refresh the follow-up list.',
       });
     } finally {
       setIsRefreshing(false);
@@ -207,6 +212,7 @@ export default function FollowUpDashboardPage() {
       {toast && (
         <Toast
           type={toast.type}
+          title={toast.title}
           message={toast.message}
           onClose={() => setToast(null)}
         />
@@ -214,7 +220,6 @@ export default function FollowUpDashboardPage() {
 
       {/* Main Header */}
       <FollowUpHeader
-        watTimeFormatted={metrics.lastUpdatedWat || 'WAT (UTC+1)'}
         callerName={callerName}
         onCallerNameChange={handleCallerNameChange}
         onRefresh={handleRefresh}
@@ -246,7 +251,7 @@ export default function FollowUpDashboardPage() {
               {activeFilter === 'MISSED_1_WEEK' && 'Missed 1 Sunday'}
               {activeFilter === 'MISSED_2_WEEKS' && 'Missed 2 Consecutive Sundays'}
               {activeFilter === 'FIRST_TIMER_72H' && 'First-Timers'}
-              {activeFilter === 'ESCALATED' && 'Overdue Tasks'}
+              {activeFilter === 'ESCALATED' && 'Needs Attention'}
             </h2>
             <span className="text-xs font-bold text-slate-600 bg-slate-200/80 px-2 py-0.5 rounded-full">
               {members.length} {members.length === 1 ? 'member' : 'members'}
@@ -263,7 +268,7 @@ export default function FollowUpDashboardPage() {
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <div className="w-8 h-8 border-3 border-blue-900 border-t-transparent rounded-full animate-spin" />
             <span className="text-xs font-bold text-slate-700">
-              Scanning attendance index...
+              Loading follow-up list...
             </span>
           </div>
         ) : members.length === 0 ? (

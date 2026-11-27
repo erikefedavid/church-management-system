@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import {
   Shield,
   Search,
@@ -20,7 +19,6 @@ import {
   History,
   Calendar,
   ChevronDown,
-  HeartHandshake,
 } from 'lucide-react';
 import {
   usherGetServicesAction,
@@ -484,16 +482,6 @@ export default function UsherHelpDesk() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            {/* FOLLOW-UP & CARE DESK BUTTON ON NAVBAR */}
-            <Link
-              href="/followup"
-              className="min-h-[44px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-3 py-2 rounded-xl shadow-xs transition-all duration-100 active:scale-[0.97] flex items-center gap-1.5 cursor-pointer"
-              title="Open Follow-Up & Volunteer Care Desk"
-            >
-              <HeartHandshake className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Follow-Up</span>
-            </Link>
-
             {/* PAST RECORDS HISTORY BUTTON ON NAVBAR */}
             <button
               type="button"

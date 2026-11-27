@@ -51,7 +51,6 @@ export default function BirthdayDashboardPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [allCelebrants, setAllCelebrants] = useState<BirthdayCelebrantItem[]>([]);
-  const [watTimeFormatted, setWatTimeFormatted] = useState('WAT (UTC+1)');
 
   const [todayDate, setTodayDate] = useState(fallbackToday);
   const [isLast7DaysOfMonth, setIsLast7DaysOfMonth] = useState(() => {
@@ -77,7 +76,6 @@ export default function BirthdayDashboardPage() {
       const res = await getBirthdayDashboardAction({ timeframe: 'ALL' });
       if (res.success) {
         setAllCelebrants(res.celebrants);
-        setWatTimeFormatted(res.metrics.lastUpdatedWat || 'WAT (UTC+1)');
         if (res.metrics.currentYear && res.metrics.currentMonth && res.metrics.currentDay) {
           setTodayDate({
             year: res.metrics.currentYear,
@@ -240,7 +238,6 @@ export default function BirthdayDashboardPage() {
 
       <BirthdayHeader
         churchName="RCCG Jesus Covenant Zone"
-        watTimeFormatted={watTimeFormatted}
         onRefresh={loadBirthdays}
         isLoading={loading}
         searchQuery={searchQuery}

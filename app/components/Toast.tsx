@@ -49,23 +49,23 @@ export default function Toast({ type, message, title, onClose, duration = 3500 }
   }[type];
 
   return (
-    <div className="fixed top-5 right-5 z-[99999] max-w-sm w-full animate-in fade-in slide-in-from-top-4 duration-200 transition-all">
+    <div className="fixed top-4 left-4 right-4 sm:top-5 sm:left-auto sm:right-5 sm:w-full sm:max-w-sm z-[99999] animate-in fade-in slide-in-from-top-4 duration-200 transition-all">
       <div
-        className={`${styleConfig.bg} ${styleConfig.border} border shadow-lg rounded-2xl p-4 flex items-start gap-3 backdrop-blur-md`}
+        className={`${styleConfig.bg} ${styleConfig.border} border shadow-lg rounded-2xl p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3 backdrop-blur-md`}
       >
         {styleConfig.icon}
-        <div className="flex-1 text-left">
+        <div className="flex-1 min-w-0 text-left">
           <p className={`text-xs font-bold ${styleConfig.text}`}>
             {title || styleConfig.titleDefault}
           </p>
-          <p className={`text-xs ${styleConfig.desc} mt-0.5 font-medium leading-relaxed`}>
+          <p className={`text-xs ${styleConfig.desc} mt-0.5 font-medium leading-relaxed break-words`}>
             {message}
           </p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2 -mt-2 p-2 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-black/5 transition-colors cursor-pointer"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center -mr-1.5 -mt-1.5 sm:-mr-2 sm:-mt-2 p-2 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-black/5 transition-colors cursor-pointer shrink-0"
           aria-label="Close notification"
         >
           <X className="w-4 h-4" />

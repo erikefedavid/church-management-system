@@ -7,6 +7,7 @@ interface AttendanceHeaderProps {
   churchName?: string;
   isLiveNow?: boolean;
   activeServiceName?: string;
+  sundayLabel?: string | null;
   currentTimeString?: string;
   geoAllowed?: boolean | null;
   geoChecking?: boolean;
@@ -18,6 +19,7 @@ const AttendanceHeader = React.memo(function AttendanceHeader({
   churchName = 'RCCG Jesus Covenant Zone',
   isLiveNow = false,
   activeServiceName,
+  sundayLabel,
   currentTimeString,
 }: AttendanceHeaderProps) {
   return (
@@ -57,17 +59,26 @@ const AttendanceHeader = React.memo(function AttendanceHeader({
                 isLiveNow ? 'bg-emerald-600 animate-pulse' : 'bg-slate-400'
               }`}
             />
-            <span className="font-bold text-slate-900">
-              {activeServiceName || 'No Service in Session'}
-            </span>
-            {isLiveNow && (
-              <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-950 uppercase tracking-wider">
-                Live
-              </span>
-            )}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-900">
+                  {activeServiceName || 'No Service in Session'}
+                </span>
+                {isLiveNow && (
+                  <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-950 uppercase tracking-wider">
+                    Live
+                  </span>
+                )}
+              </div>
+              {activeServiceName && sundayLabel && (
+                <span className="text-[11px] font-medium text-slate-600">
+                  {sundayLabel}
+                </span>
+              )}
+            </div>
           </div>
           {currentTimeString && (
-            <span className="text-slate-700 font-mono text-[11px] font-medium">
+            <span className="text-slate-700 font-mono text-[11px] font-medium shrink-0">
               WAT {currentTimeString}
             </span>
           )}

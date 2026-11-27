@@ -3,13 +3,12 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, RefreshCw, Search, Clock, X } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Search, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { tactileTapProps } from '@/lib/motion';
 
 interface BirthdayHeaderProps {
   churchName?: string;
-  watTimeFormatted?: string;
   onRefresh: () => void;
   isLoading: boolean;
   searchQuery: string;
@@ -18,7 +17,6 @@ interface BirthdayHeaderProps {
 
 export default function BirthdayHeader({
   churchName = 'RCCG Jesus Covenant Zone',
-  watTimeFormatted = 'WAT (UTC+1)',
   onRefresh,
   isLoading,
   searchQuery,
@@ -49,15 +47,9 @@ export default function BirthdayHeader({
           </div>
 
           <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Birthdays
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                <Clock className="w-3 h-3 shrink-0" />
-                {watTimeFormatted}
-              </span>
-            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Birthdays
+            </span>
             <h1 className="text-base sm:text-xl font-bold tracking-tight text-slate-900 leading-tight truncate">
               {churchName}
             </h1>
