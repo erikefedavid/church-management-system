@@ -619,20 +619,34 @@ export default function AdminScorecardDashboard() {
               </div>
             </div>
 
-            {/* Live Service in Session Alert Banner (NO USHER DESK LINK) */}
-            {data?.isLiveNow && data?.activeService && (
+            {/* Live Service or Next Upcoming Service Banner */}
+            {data?.isLiveNow && data?.activeService ? (
               <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3.5 flex items-center gap-3 text-xs">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 <div>
                   <span className="font-bold text-emerald-950 block">
-                    🔴 Live Service in Session: {data.activeService.name} ({formatTimeRange12(data.activeService.startTime, data.activeService.endTime)})
+                    Live Service: {data.activeService.name} ({formatTimeRange12(data.activeService.startTime, data.activeService.endTime)})
                   </span>
                   <span className="text-[11px] text-emerald-800">
-                    Attendance check-ins are streaming live.
+                    {data.sundayLabel ? `${data.sundayLabel} · ` : ''}Attendance check-ins are streaming live.
                   </span>
                 </div>
               </div>
-            )}
+            ) : data?.nextUpcomingService ? (
+              <div className="bg-blue-50/90 border border-blue-200 rounded-2xl p-3.5 flex items-center gap-3 text-xs">
+                <Clock className="w-4 h-4 text-blue-600 shrink-0" />
+                <div>
+                  <span className="font-bold text-slate-900 block">
+                    Next Upcoming Service: {data.nextUpcomingService.name} ({data.nextUpcomingService.formattedSchedule})
+                  </span>
+                  {data.sundayLabel && (
+                    <span className="text-[11px] font-medium text-blue-800">
+                      {data.sundayLabel}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : null}
 
             {/* Youth-Focused Executive Metric Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

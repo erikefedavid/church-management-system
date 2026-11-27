@@ -126,6 +126,14 @@ export interface AdminScorecardResponse {
   activeDateISO?: string;
   timeRangeLabel?: string;
   isLiveNow?: boolean;
+  sundayLabel?: string | null;
+  nextUpcomingService?: {
+    name: string;
+    dayOfWeek: string;
+    startTime: string;
+    endTime: string;
+    formattedSchedule: string;
+  } | null;
   activeService?: {
     id: string;
     name: string;
@@ -242,28 +250,10 @@ export async function getAdminScorecardAction(
       );
       targetServices = [...dayServices, ...otherServices];
     } else if (timeRange === 'TODAY') {
-      // Prioritize services for today's weekday, plus any service that has attendance logged today
-      const todayWeekdayServices = allServices.filter((s) => s.dayOfWeek === ngInfo.weekday);
+      // Use monthly-aware todayServices from service-resolver + any service that has attendance logged today
+      const filteredToday = activeRes.todayServices;
       const serviceIdsWithRecords = new Set(records.map((r) => r.serviceScheduleId));
 
-      let filteredToday = todayWeekdayServices;
-      if (ngInfo.weekday === 'SUNDAY') {
-        const isThanksgiving = activeRes.isFirstSunday;
-        if (isThanksgiving) {
-          filteredToday = todayWeekdayServices.filter(
-            (s) =>
-              s.name.toLowerCase().includes('thanksgiving') ||
-              s.name.toLowerCase().includes('sunday school (thanksgiving)') ||
-              s.name.toLowerCase().includes('workers')
-          );
-        } else {
-          filteredToday = todayWeekdayServices.filter(
-            (s) => !s.name.toLowerCase().includes('thanksgiving')
-          );
-        }
-      }
-
-      // Combine scheduled today with any non-scheduled service that has attendance today
       const otherServicesWithAttendance = allServices.filter(
         (s) => !filteredToday.some((ft) => ft.id === s.id) && serviceIdsWithRecords.has(s.id)
       );
@@ -666,6 +656,8 @@ export async function getAdminScorecardAction(
       activeDateISO,
       timeRangeLabel,
       isLiveNow: activeRes.isLiveNow,
+      sundayLabel: activeRes.sundayLabel ?? null,
+      nextUpcomingService: activeRes.nextUpcomingService ?? null,
       activeService: activeRes.activeService
         ? {
             id: activeRes.activeService.id,
