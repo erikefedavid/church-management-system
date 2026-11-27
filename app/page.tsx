@@ -54,11 +54,50 @@ const WEEKLY_SCHEDULE = [
   },
 ];
 
-const HERO_PHRASES = [
-  'Know who showed up.',
-  'Notice who is missing.',
-  'Never forget anyone.',
-];
+const HERO_HEADLINE =
+  'Know who showed up. Notice who is missing. Never forget anyone.';
+
+function TypedHeadline() {
+  const shouldReduceMotion = useReducedMotion();
+  const [charCount, setCharCount] = useState(
+    shouldReduceMotion ? HERO_HEADLINE.length : 0
+  );
+
+  useEffect(() => {
+    if (shouldReduceMotion) {
+      setCharCount(HERO_HEADLINE.length);
+      return;
+    }
+
+    let index = 0;
+    const interval = window.setInterval(() => {
+      index += 1;
+      setCharCount(index);
+      if (index >= HERO_HEADLINE.length) {
+        window.clearInterval(interval);
+      }
+    }, 14);
+
+    return () => window.clearInterval(interval);
+  }, [shouldReduceMotion]);
+
+  const isDone = charCount >= HERO_HEADLINE.length;
+
+  return (
+    <span className="relative inline-block">
+      <span aria-hidden="true" className="invisible block">
+        {HERO_HEADLINE}
+      </span>
+      <span aria-hidden="true" className="absolute inset-0">
+        {HERO_HEADLINE.slice(0, charCount)}
+        <span
+          className="inline-block w-[2.5px] h-[0.86em] bg-blue-400 align-middle ml-1 transition-opacity duration-200"
+          style={{ opacity: isDone ? 0 : 1 }}
+        />
+      </span>
+    </span>
+  );
+}
 
 function AnimatedDigit({
   target,
@@ -174,27 +213,11 @@ export default function LandingPage() {
           />
 
           <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center space-y-6">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
-              {HERO_PHRASES.map((phrase, idx) => (
-                <span key={phrase} className="inline-block overflow-hidden align-bottom mr-[0.26em] last:mr-0">
-                  <motion.span
-                    className="inline-block"
-                    {...(shouldReduceMotion
-                      ? {}
-                      : {
-                          initial: { opacity: 0, y: '100%' },
-                          animate: { opacity: 1, y: 0 },
-                          transition: {
-                            duration: 0.3,
-                            delay: 0.04 + idx * 0.07,
-                            ease: MOMENTUM_EASE,
-                          },
-                        })}
-                  >
-                    {phrase}
-                  </motion.span>
-                </span>
-              ))}
+            <h1
+              aria-label={HERO_HEADLINE}
+              className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]"
+            >
+              <TypedHeadline />
             </h1>
 
             <motion.p
