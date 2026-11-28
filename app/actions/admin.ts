@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { PersonStatus, PersonCategory, CheckInMethod, DayOfWeek } from '@prisma/client';
 import * as XLSX from 'xlsx';
@@ -1647,6 +1648,9 @@ export async function updateChurchLocationAction(params: {
         geofenceRadius: radius,
       },
     });
+
+    revalidatePath('/checkin');
+    revalidatePath('/admin');
 
     return { success: true };
   } catch (error) {

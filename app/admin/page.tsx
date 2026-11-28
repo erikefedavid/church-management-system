@@ -112,12 +112,19 @@ export default function AdminScorecardDashboard() {
       if (settled) return;
       settled = true;
       window.clearTimeout(hardTimer);
+      const acc = Math.round(pos.coords.accuracy);
       setLocLat(pos.coords.latitude.toFixed(6));
       setLocLng(pos.coords.longitude.toFixed(6));
       setLocDetecting(false);
-      const msg = `Detected location (±${Math.round(pos.coords.accuracy)}m accuracy). Click Save Location to apply.`;
-      setLocStatusMsg({ type: 'info', text: msg });
-      setToast({ type: 'info', message: msg });
+      if (acc > 100) {
+        const msg = `Low GPS accuracy (±${acc}m — likely cell tower/Wi-Fi). Other phones may show outside sanctuary. Stand near a window or paste Google Maps coordinates for best accuracy.`;
+        setLocStatusMsg({ type: 'error', text: msg });
+        setToast({ type: 'error', message: msg });
+      } else {
+        const msg = `Detected sharp GPS (±${acc}m accuracy). Click Save Location to apply.`;
+        setLocStatusMsg({ type: 'info', text: msg });
+        setToast({ type: 'info', message: msg });
+      }
     };
 
     const onFail = (msg: string) => {

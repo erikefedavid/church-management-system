@@ -51,8 +51,9 @@ export default function MemberCheckInPortal() {
   const [isReady, setIsReady] = useState(false);
 
   // Geolocation state (strict real GPS enforced)
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const userLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number; accuracy?: number } | null>(null);
+  const userLocationRef = useRef<{ latitude: number; longitude: number; accuracy?: number } | null>(null);
+  const churchRef = useRef<ActiveServiceResponse['church'] | null>(null);
   const [distanceMeters, setDistanceMeters] = useState<number | null>(null);
   const [geoAllowed, setGeoAllowed] = useState<boolean | null>(null);
   const [geoChecking, setGeoChecking] = useState<boolean>(false);
@@ -115,18 +116,43 @@ export default function MemberCheckInPortal() {
     []
   );
 
+  const evaluateGeofence = useCallback(
+    (
+      coords: { latitude: number; longitude: number; accuracy?: number },
+      targetChurch: ActiveServiceResponse['church'] | null
+    ) => {
+      const churchCoords = targetChurch
+        ? { latitude: targetChurch.latitude, longitude: targetChurch.longitude }
+        : { latitude: 6.5244, longitude: 3.3792 };
+      const baseRadius = targetChurch?.geofenceRadius || 150;
+
+      const check = isWithinChurchGeofence(coords, churchCoords, baseRadius);
+      setDistanceMeters(check.distanceMeters);
+      setGeoAllowed(check.isAllowed);
+      setGeoErrorType(check.isAllowed ? null : 'OUTSIDE');
+      return check.isAllowed;
+    },
+    []
+  );
+
   // 1. Initial Load: Service schedule & device lock detection
   useEffect(() => {
     async function loadService() {
       try {
         const res: ActiveServiceResponse = await getActiveServiceAction();
         if (res.success && res.church) {
+          churchRef.current = res.church;
           setChurch(res.church);
           setActiveService(res.activeService || null);
           setNextUpcomingService(res.nextUpcomingService || null);
           setCurrentTimeString(res.currentTimeString || '');
           setSundayLabel(res.sundayLabel || null);
           setIsLiveNow(res.isLiveNow || false);
+
+          // Re-evaluate if GPS already finished before DB returned
+          if (userLocationRef.current) {
+            evaluateGeofence(userLocationRef.current, res.church);
+          }
 
           // Check device attendance lock
           const existingLock = getDeviceAttendanceLock();
@@ -159,7 +185,7 @@ export default function MemberCheckInPortal() {
     }
   }, []);
 
-  // 2. Geolocation Request & Sanctuary Verification
+  // 2. Geolocation Request & Sanctuary Verification (runs in parallel with DB load)
   const requestLocation = useCallback(async (): Promise<boolean> => {
     setGeoChecking(true);
     setGeoErrorType(null);
@@ -187,21 +213,9 @@ export default function MemberCheckInPortal() {
         userLocationRef.current = coords;
         setUserLocation(coords);
 
-        const churchCoords = church
-          ? { latitude: church.latitude, longitude: church.longitude }
-          : { latitude: 6.5244, longitude: 3.3792 };
-        const baseRadius = church?.geofenceRadius || 150;
-
-        const check = isWithinChurchGeofence(coords, churchCoords, baseRadius);
-        setDistanceMeters(check.distanceMeters);
-        setGeoAllowed(check.isAllowed);
+        const allowed = evaluateGeofence(coords, churchRef.current || church);
         setGeoChecking(false);
-
-        if (!check.isAllowed) {
-          setGeoErrorType('OUTSIDE');
-        }
-
-        resolve(check.isAllowed);
+        resolve(allowed);
       };
 
       const finishWithError = (type: 'PERMISSION_DENIED' | 'TIMEOUT' | 'POSITION_UNAVAILABLE') => {
@@ -217,7 +231,7 @@ export default function MemberCheckInPortal() {
       // Hard safety timeout in case browser geolocation prompt/service stalls
       const hardTimer = window.setTimeout(() => {
         finishWithError('TIMEOUT');
-      }, 12500);
+      }, 11500);
 
       navigator.geolocation.getCurrentPosition(
         finishWithCoords,
@@ -241,8 +255,8 @@ export default function MemberCheckInPortal() {
               },
               {
                 enableHighAccuracy: false,
-                timeout: 5000,
-                maximumAge: 30000,
+                timeout: 4000,
+                maximumAge: 60000,
               }
             );
             return;
@@ -251,22 +265,21 @@ export default function MemberCheckInPortal() {
         },
         {
           enableHighAccuracy: true,
-          timeout: 7000,
-          maximumAge: 15000,
+          timeout: 6500,
+          maximumAge: 60000,
         }
       );
     });
-  }, [church]);
+  }, [church, evaluateGeofence]);
 
-  // Trigger location on mount once service check finishes
+  // Trigger location immediately on mount in parallel with loadService()
   useEffect(() => {
-    if (isReady) {
-      const timer = setTimeout(() => {
-        void requestLocation();
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-  }, [isReady, requestLocation]);
+    const timer = setTimeout(() => {
+      void requestLocation();
+    }, 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 3. Complete check-in logic
   const executeCheckIn = useCallback(
